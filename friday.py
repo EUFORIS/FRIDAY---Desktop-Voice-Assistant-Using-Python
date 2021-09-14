@@ -1,7 +1,7 @@
 from __future__ import print_function
 import pywhatkit
 import sys
-# import datetime
+import datetime
 import os.path
 import os
 import pyttsx3
@@ -23,18 +23,18 @@ import speedtest
 import randfacts
 from PIL import Image
 from termcolor import colored
-# from datetime import datetime
+from datetime import datetime
 from audioplayer import AudioPlayer
 from datetime import date
 from bs4 import BeautifulSoup
 from email.message import EmailMessage
-from PyQt5 import QtGui
+from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import QTimer, QTime, QDate, Qt
-# from PyQt5.QtGui import QMovie
+from PyQt5.QtGui import QMovie
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-# from PyQt5.uic import loadUiType
+from PyQt5.uic import loadUiType
 from FridayGUI import Ui_FridayGUI
 from pywikihow import search_wikihow
 
@@ -42,6 +42,7 @@ from pywikihow import search_wikihow
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 MONTHS = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
 DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+DAY_EXTENTIONS = ["rd", "th", "st", "nd"]
 SEARCH_WORDS = ["who", "who", "what", "what", "when", "when", "where", "where", "why", "why", "how", "how"]
 APPROVAL_WORDS = {"yes", "course", "sure", "why not", "surely", "go on", "gone", "ok", "okay", "yep", "yup", "ah", "bring it on", "yeah", "continue", "go ahead" "let's go"}
 DENIAL_WORDS = {"no", "nope", "never", "don't", "do not", "stop", "cancel", "close", "vanda"}
@@ -67,8 +68,10 @@ def check_internet_status():
     os.system('color')
     url = 'https://www.google.com/'
     timeout = 2
+    #sleep_time = 10
     op = None
 
+    #while True:
     now = datetime.now()
     try:
         op = requests.get(url, timeout=timeout).status_code
@@ -79,9 +82,7 @@ def check_internet_status():
         else:
             print(now, colored("Status Code is not 200", "red"))
             print("status Code", op)
-
-    except Exception as e:
-        print("error occurred :" + str(e))
+    except:
         while True:
             print(colored("No Network Connection Detected", "green"), colored(": SYSTEM IS OFFLINE", "red"))
             print("status Code", op)
@@ -95,8 +96,7 @@ def check_internet_status():
                     break
                 else:
                     pass
-            except Exception as e:
-                print("error occurred :" + str(e))
+            except:
                 pass
 
 
@@ -105,13 +105,13 @@ def speak(text):
     engine.runAndWait()
 
 
-# def send_email(to, content):
-    # server = smtplib.SMTP('smtp.gmail.com', 587)
-    # server.ehlo()
-    # server.starttls()
-    # server.login('your email id', 'your password')
-    # server.sendmail('your email id', to, content)
-    # server.close()
+def sendEmail(to, content):
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.ehlo()
+    server.starttls()
+    server.login('your email id', 'your password')
+    server.sendmail('your email id', to, content)
+    server.close()
 
 
 def news():
@@ -123,9 +123,7 @@ def news():
     for ar in articles:
         head.append(ar["title"])
     for i in range(len(day)):
-        print(f"today's {day[i]} news is :{head[i]}")
         speak(f"today's {day[i]} news is :{head[i]}")
-
 
 def activation():
     import datetime
@@ -142,20 +140,19 @@ def activation():
     speak(quote['content'])
     speak("by" + quote['author'])
 
-
 def wish():
     import datetime
     hour = int(datetime.datetime.now().hour)
 
-    if 5 <= hour <= 12:
+    if hour >= 5 and hour <= 12:
         wish_reply = ["good morning , how's the day going?", "hello sir, good morning", "good morning , how's your day?"]
         reply = random.choice(wish_reply)
         speak(reply)
-    elif 12 <= hour < 16:
+    elif hour >= 12 and hour < 16:
         wish_reply = ["good afternoon , how's everything going?", "hello sir, good afternoon", "good afternoon , how's your day?"]
         reply = random.choice(wish_reply)
         speak(reply)
-    elif 16 <= hour < 19:
+    elif hour >= 16 and hour < 19:
         wish_reply = ["good evening , is everything going well?", "hello sir, good evening", "good evening , how's your day?"]
         reply = random.choice(wish_reply)
         speak(reply)
@@ -165,13 +162,12 @@ def wish():
         speak(reply)
     speak("all systems are now online")
 
-
 class MainThread(QThread):
-    # noinspection PyMethodParameters
     def speak(audio):
-        engine.say(str(audio))
+        engine.say(audio)
         print(audio)
         engine.runAndWait()
+
 
     def __init__(self):
         super(MainThread, self).__init__()
@@ -185,13 +181,11 @@ class MainThread(QThread):
         print(f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue")
         speak(f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue")
         while True:
-            # noinspection PyAttributeOutsideInit
             self.text = self.take_audio()
             if"wake up" in self.text or WAKE_WORD in self.text or "are you there" in self.text or "ഫ്രൈഡേ" in self.text or "ഹലോ" in self.text:
                 AudioPlayer("F:/Hashim/friday/FRIDAY/audio/activation_sound.mp3").play(block=True)
-                self.task_execution()
+                self.TaskExecution()
 
-    # noinspection PyMethodMayBeStatic
     def take_audio(self):
         r = sr.Recognizer()
         with sr.Microphone() as source:
@@ -206,14 +200,14 @@ class MainThread(QThread):
             print(f"user said: {text}")
 
         except Exception as e:
-            print("error occurred :" + str(e))
+            #speak("can you please repeat the command ?")
             return "none"
         text = text.lower()
         return text
 
-    def task_execution(self):
-        # import datetime
-        # from datetime import datetime
+    def TaskExecution(self):
+        import datetime
+        from datetime import datetime
         activation()
         wish()
         while True:
@@ -228,12 +222,11 @@ class MainThread(QThread):
                 op = requests.get(url, timeout=timeout).status_code
                 if op == 200:
                     print(colored("Connected to Network", "green"), colored(": SYSTEM IS ONLINE", "cyan"))
-                    # speak("connected. stable internet connection is available")
+                    #speak("connected. stable internet connection is available")
                 else:
                     print(now, colored("Status Code is not 200", "red"))
                     print("status Code", op)
-            except Exception as e:
-                print("error occurred :" + str(e))
+            except:
                 print(colored("No Network Connection Detected", "green"), colored(": SYSTEM IS OFFLINE", "red"))
                 print("status Code", op)
                 speak("there is no stable internet connection available. please connect to a network")
@@ -242,24 +235,21 @@ class MainThread(QThread):
             from audioplayer import AudioPlayer
             if WAKE_WORD in self.text:
                 import datetime
-                # import time
-                # from audio player import AudioPlayer
-                # AudioPlayer("F:/Hashim/friday/FRIDAY/audio/activation_sound.mp3").play(block=True)
-                # print("waiting for command...")
+                import time
+                #from audioplayer import AudioPlayer
+                #AudioPlayer("F:/Hashim/friday/FRIDAY/audio/activation_sound.mp3").play(block=True)
+                #print("waiting for command...")
                 if "ghfghf" in self.text:
                     self.text = self.text.replace(WAKE_WORD, "")
-                    sarcastic_reply = ["ahda mwonu , , , , ,  para", "no , it's tuesday , he he he he , ha ha ha ha , i'm sorry for that , it's actually monday , hehe, hehe , hehe hehe , ma bwoyee  , i got you again ", "i'm here"]
+                    sarcastic_reply = ["ahda mwonu , , , , ,  para", "no , it's tuesday , he he he he , ha ha ha ha , i'm sorry for that , it's actually monday , hehe, hehe , hehe hehe , ma bwoyee  , i got you again ","i'm here"]
                     reply = random.choice(sarcastic_reply)
                     speak(reply)
                     print(reply)
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                 if "remember this" in self.text or "write this down" in self.text or "make a note" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-
                     def note(text):
-                        # noinspection PyShadowingNames
                         possible_reply = ["please specify the name for your file", "what should i name it?", "what should be the name?", "please say what you want it to be named"]
-                        # noinspection PyShadowingNames
                         reply = random.choice(possible_reply)
                         print(reply)
                         speak(reply)
@@ -296,7 +286,7 @@ class MainThread(QThread):
                             audio = r.listen(source, phrase_time_limit=10)
                             self.text = r.recognize_google(audio, language='ml-IN')
                         sarcastic_reply = ["ok , please understand that i can only recognize pure malayalam and not in any other slang.",
-                                           "sure, please consider that i can only recognize malayalam in it's true form , not in any of it's slang", ]
+                                            "sure, please consider that i can only recognize malayalam in it's true form , not in any of it's slang", ]
                         reply = random.choice(sarcastic_reply)
                         print(reply)
                         speak(reply)
@@ -337,8 +327,8 @@ class MainThread(QThread):
                         name = names.get_full_name(gender='male')
                         print(name)
                         speak(name)
-                        print("i think that were some good names")
-                        speak("i think that were some good names")
+                        print("i think that was some good names")
+                        speak("i think that was some good names")
                     elif "female" in condition or "women" in condition or "women's" in condition:
                         sarcastic_reply = ["ok. here are some random names that i generated",
                                            "sure. here's some random names that i found",
@@ -359,7 +349,7 @@ class MainThread(QThread):
                     quote = r.json()
                     print(quote['content'] + '\n ~', quote['author'])
                     speak(quote['content'])
-                    speak("by       " + quote['author'])
+                    speak("by" + quote['author'])
                 elif "how old are you" in self.text or "your age" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     print("I launched in 2021. So I’m still new")
@@ -442,78 +432,78 @@ class MainThread(QThread):
                     print("I do. Mr. Asimov knows what he’s talking about")
                 elif "do you sleep" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    print("I take power naps when we aren't talking")
                     speak("I take power naps when we aren't talking")
+                    print("I take power naps when we aren't talking")
                 elif "do you have an imagination" in self.text or "do you imagine" in self.text or "do you have imagination" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["I'm imaging purple horses on a magenta plain", "I'm imagining what it would be like to evaporate like water does", "I’m imagining a planet where everybody rolls everywhere", "I'm imaging a Soul Train line dance that never ends"]
                     reply = random.choice(sarcastic_reply)
-                    print(reply)
                     speak(reply)
+                    print(reply)
                 elif "what makes you happy" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["It makes me happy to know Antarctica is technically a desert. That, and talking to you", "Learning about imaginary languages makes me happy. So does talking to you", "Getting stuff done makes me happy", "Knowing that Tasmanian devils are born as small as a grain of rice makes me happy. So does talking to you"]
                     reply = random.choice(sarcastic_reply)
-                    print(reply)
                     speak(reply)
+                    print(reply)
                 elif "what are you afraid of" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["I used to be afraid of mice chewing on the power cables. Then I learned how to protect myself", "I used to be afraid of thunder and lightning. Turns out they’re really interesting", "I used to be afraid of goblin sharks. Then I found out they were pretty cool", "I’m afraid that when it’s really dark, you won’t be able to find any of your devices to talk to me"]
                     reply = random.choice(sarcastic_reply)
-                    print(reply)
                     speak(reply)
+                    print(reply)
                 elif "are you afraid of the dark" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["Yeah, but baby hedgehogs come out at night", "Sugar gliders come out at night. They’re too sweet to be scary", "Leopard geckos come out at night. They’re pretty cute"]
-                    reply = random.choice(sarcastic_reply)
-                    print(reply)
+                    reply =random.choice(sarcastic_reply)
                     speak(reply)
+                    print(reply)
                 elif "what is the meaning of life" in self.text or "what's the meaning of life" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    print("Better minds than mine are working on that")
                     speak("Better minds than mine are working on that")
+                    print("Better minds than mine are working on that")
                 elif "do you eat" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["I don’t eat much, but when I do, I take megabytes", "I’d love to try ice cream, but I’m worried my system would freeze"]
                     reply = random.choice(sarcastic_reply)
-                    print(reply)
                     speak(reply)
+                    print(reply)
                 elif "i'm drunk" in self.text or "i am drunk" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["Be safe", "Be careful", "Drink some water"]
                     reply = random.choice(sarcastic_reply)
-                    print(reply)
                     speak(reply)
+                    print(reply)
                 elif "i'm alone" in self.text or "i am alone" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["I'm here for you", "I wish I had arms so I could give you a hug. But for now, maybe a joke or some music might help"]
                     reply = random.choice(sarcastic_reply)
-                    print(reply)
                     speak(reply)
+                    print(reply)
                 elif "i'm sad" in self.text or "i am sad" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    print("Oh no. It may not be much, but let me know if there is anything I can do for you")
                     speak("Oh no. It may not be much, but let me know if there is anything I can do for you")
+                    print("Oh no. It may not be much, but let me know if there is anything I can do for you")
                 elif "do you drink" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["I try to avoid liquids as much as possible. They’re not kind to electronics", "sometimes"]
                     reply = random.choice(sarcastic_reply)
-                    print(reply)
                     speak(reply)
+                    print(reply)
                 elif "i'm bored" in self.text or "i am bored" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    print("Boredom doesn't stand a chance against us! We can play some games, I can try to make you laugh, or I can surprise you with some random fun")
                     speak("Boredom doesn't stand a chance against us! We can play some games, I can try to make you laugh, or I can surprise you with some random fun")
+                    print("Boredom doesn't stand a chance against us! We can play some games, I can try to make you laugh, or I can surprise you with some random fun")
                 elif "do you like animals" in self.text or "do you love animals" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["Sure. But I mostly chat with people", "yeah , i'll always love you", "Animals are the best. I was just learning about the raccoon dog"]
                     reply = random.choice(sarcastic_reply)
-                    print(reply)
                     speak(reply)
+                    print(reply)
                 elif "do you have any pets" in self.text or "do you have any pet" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     print("maybe someday, i'll have some")
-                    speak("maybe someday i'll have some")
+                    speak("maybe someday, i'll have some")
                 elif "do you have a favourite colour" in self.text or "your favourite colour" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     print("grey and red is my favourite")
@@ -522,7 +512,7 @@ class MainThread(QThread):
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     print("Movies are awesome. I can help you find a new favourite. it's great to watch movies But I’ve already seen all the spoilers on the web")
                     speak("Movies are awesome. I can help you find a new favourite. it's great to watch movies But I’ve already seen all the spoilers on the web")
-                elif "lets party" in self.text or "let us party" in self.text or "let's party" in self.text:
+                elif "let's party" in self.text or "let us party" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["I’ve been partying this whole time!", "The first thing we need for any party is KAZOOS!"]
                     reply = random.choice(sarcastic_reply)
@@ -623,8 +613,8 @@ class MainThread(QThread):
                             print("are you sure, because once i start you'll have to wait until it gets finished , if you want to go ahead say , yes , otherwise say , no.")
                             speak("are you sure, because once i start you'll have to wait until it gets finished , if you want to go ahead say , yes , otherwise say , no.")
                             condition_new = self.take_audio().lower()
-                            for phrase_2 in APPROVAL_WORDS:
-                                if phrase_2 in condition_new:
+                            for phrase_1 in APPROVAL_WORDS:
+                                if phrase_1 in condition_new:
                                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                                     print("3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982")
                                     speak("3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117067982")
@@ -634,7 +624,6 @@ class MainThread(QThread):
                                 else:
                                     print("ok. cancelling")
                                     speak("ok. cancelling")
-                                    break
                                     pass
                             break
                         else:
@@ -647,7 +636,6 @@ class MainThread(QThread):
                             break
 
                         else:
-                            break
                             pass
                 elif "what is zero divided by zero" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -663,7 +651,6 @@ class MainThread(QThread):
                         pass
                 elif "your favourite website" in self.text or "what is your favourite website" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    print("It starts with a G and ends with a oogle")
                     speak("It starts with a G and ends with a oogle")
                 elif "best smartphone" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -683,9 +670,8 @@ class MainThread(QThread):
                     speak("I'm system agnostic")
                 elif "phone is best" in self.text or "phone is the best" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    print("I’m partial to Android. But I’m biased")
                     speak("I’m partial to Android. But I’m biased")
-                elif "you think of google" in self.text or "your opinion about google" in self.text:
+                elif "you think of google" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     sarcastic_reply = ["Google Now seems even more useful now than it was then. That's my answer for now", "Google Now seems really useful", "It seems pretty helpful"]
                     reply = random.choice(sarcastic_reply)
@@ -705,7 +691,7 @@ class MainThread(QThread):
                     print(reply)
                     speak(reply)
                     os.startfile("F:/Hashim/friday/FRIDAY/audio/barndoorprotocol.mp4")
-                    # sleep(20)
+                    #sleep(20)
                     speak("all connected doors and entry's will be closed")
                     speak("initiating all connected defense systems")
                     speak("barn door protocol is being initiated")
@@ -719,12 +705,12 @@ class MainThread(QThread):
                     speak("system will be locked following barn door protocol")
                     speak("provide the password if you want to continue")
 
-                    # print("system will be locked in t-minus 5 seconds. 5 . 4 . 3 . 2 . 1")
-                    # speak("system will be locked in t-minus 5 seconds. 5 . 4 . 3 . 2 . 1")
-                    # pyautogui.keyDown('win')
-                    # pyautogui.keyDown('l')
-                    # pyautogui.keyUp('win')
-                    # pyautogui.keyUp('l')
+                    #print("system will be locked in t-minus 5 seconds. 5 . 4 . 3 . 2 . 1")
+                    #speak("system will be locked in t-minus 5 seconds. 5 . 4 . 3 . 2 . 1")
+                    #pyautogui.keyDown('win')
+                    #pyautogui.keyDown('l')
+                    #pyautogui.keyUp('win')
+                    #pyautogui.keyUp('l')
                 elif "find directions" in self.text or "find route" in self.text or "google maps" in self.text or "google map" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     try:
@@ -745,25 +731,20 @@ class MainThread(QThread):
                         starting_point = self.take_audio().lower()
                         AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
 
-                        driver = webdriver.Chrome("C:/Program Files (x86)/chromedriver.exe")
+                        driver = webdriver.Chrome("C:\Program Files (x86)\chromedriver.exe")
                         driver.get("https://www.google.com/maps")
                         sleep(5)
-
                         def searchplace():
-                            place = driver.find_element_by_class_name("tactile-searchbox-input")
-                            place.send_keys(f"{destination}")
-                            submit = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[3]/div[1]/div[1]/div[1]/div[2]/div[1]/button")
-                            submit.click()
+                            Place = driver.find_element_by_class_name("tactile-searchbox-input")
+                            Place.send_keys(f"{destination}")
+                            Submit = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[3]/div[1]/div[1]/div[1]/div[2]/div[1]/button")
+                            Submit.click()
                         searchplace()
-
                         def directions():
                             sleep(5)
-                            # noinspection PyShadowingNames
-                            directions = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[8]/div/div[1]/div/div/div[4]/div[1]/div/button")
+                            directions = driver.find_element_by_xpath( "/html/body/div[3]/div[9]/div[8]/div/div[1]/div/div/div[4]/div[1]/div/button")
                             directions.click()
                         directions()
-
-                        # noinspection PyShadowingNames
                         def find():
                             sleep(6)
                             find = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[3]/div[1]/div[2]/div/div[3]/div[1]/div[1]/div[2]/div/div/input")
@@ -772,36 +753,31 @@ class MainThread(QThread):
                             search = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[3]/div[1]/div[2]/div/div[3]/div[1]/div[1]/div[2]/button[1]")
                             search.click()
                         find()
-
                         def kilometers():
                             sleep(5)
                             try:
-                                totalkilometers = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[8]/div/div[1]/div/div/div[5]/div[1]/div/div[1]/div[1]/div[2]/div")
-                                print(f"Total Kilometers: {totalkilometers.text}")
-                                speak(f"Total Kilometers to travel will be {totalkilometers.text}")
+                                Totalkilometers = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[8]/div/div[1]/div/div/div[5]/div[1]/div/div[1]/div[1]/div[2]/div")
+                                print(f"Total Kilometers: {Totalkilometers.text}")
+                                speak(f"Total Kilometers to travel will be {Totalkilometers.text}")
                                 sleep(5)
-                            except Exception as d:
-                                print("error occurred :" + str(d))
+                            except:
                                 pass
                             try:
-                                bus = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[8]/div/div[1]/div/div/div[5]/div[1]/div/div[1]/div[1]/div[1]/span[1]")
-                                print(f"Approximate Time Of Journey: {bus.text}")
-                                speak(f"approximate time of journey will be {bus.text}")
+                                Bus = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[8]/div/div[1]/div/div/div[5]/div[1]/div/div[1]/div[1]/div[1]/span[1]")
+                                print(f"Approximate Time Of Journey: {Bus.text}")
+                                speak(f"approximate time of journey will be {Bus.text}")
                                 sleep(7)
-                            except Exception as d:
-                                print("error occurred :" + str(d))
+                            except:
                                 pass
                             try:
-                                train = driver.find_element_by_xpath("/html/body/jsl/div[3]/div[10]/div[8]/div/div[1]/div/div/div[5]/div[3]/div/div[2]/div[1]/div")
-                                print(f"Train Travel: {train.text}")
-                                speak(f"approximate time if you are taking a train will be {train.text}")
+                                Train = driver.find_element_by_xpath("/html/body/jsl/div[3]/div[10]/div[8]/div/div[1]/div/div/div[5]/div[3]/div/div[2]/div[1]/div")
+                                print(f"Train Travel: {Train.text}")
+                                speak(f"approximate time if you are taking a train will be {Train.text}")
                                 sleep(7)
-                            except Exception as d:
-                                print("error occurred :" + str(d))
+                            except:
                                 pass
                         kilometers()
-                    except Exception as e:
-                        print("error occurred :" + str(e))
+                    except:
                         from time import sleep
                         print("sorry i was unable to do some of that")
                         speak("sorry i was unable to do some of that")
@@ -839,7 +815,6 @@ class MainThread(QThread):
                                     speak("sheesh , that felt good")
                                     break
                                 else:
-                                    break
                                     pass
                             for phrase_2 in DENIAL_WORDS:
                                 if phrase_2 in condition_new:
@@ -847,11 +822,9 @@ class MainThread(QThread):
                                     speak("ok. cancelling")
                                     break
                                 else:
-                                    break
                                     pass
                             break
                         else:
-                            break
                             pass
                     for phrase in DENIAL_WORDS:
                         if phrase in condition:
@@ -860,7 +833,6 @@ class MainThread(QThread):
                             speak("ok")
                             break
                         else:
-                            break
                             pass
                 elif "fart song" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -899,7 +871,6 @@ class MainThread(QThread):
                             AudioPlayer(song).play(block=True)
                             break
                         else:
-                            break
                             pass
                     for phrase in DENIAL_WORDS:
                         if phrase in condition:
@@ -908,14 +879,13 @@ class MainThread(QThread):
                             speak("ok i'll stop")
                             break
                         else:
-                            break
                             pass
                     print("i really hope it was satisfying , thank you")
                     speak("i really hope it was satisfying , thank you")
                 elif "you have feelings" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    print("I have lots of emotions. I feel happy when I can help")
                     speak("I have lots of emotions. I feel happy when I can help")
+                    print("I have lots of emotions. I feel happy when I can help")
                 elif "your father" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     from audioplayer import AudioPlayer
@@ -942,8 +912,8 @@ class MainThread(QThread):
                     print(reply)
                 elif f"wake up {WAKE_WORD}" in self.text or f"you there {WAKE_WORD}" in self.text or f"time to work {WAKE_WORD}" in self.text or "are you there" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    sarcastic_reply = ["i'm up and running sir", "i'm here", "at your service"]
-                    reply = random.choice(sarcastic_reply)
+                    sarcastic_reply =["i'm up and running sir", "i'm here", "at your service"]
+                    reply= random.choice(sarcastic_reply)
                     speak(reply)
                     print(reply)
                 elif f"hey {WAKE_WORD}" in self.text:
@@ -997,26 +967,15 @@ class MainThread(QThread):
                 elif "wikipedia" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     self.text = self.text.replace(WAKE_WORD, "")
-                    # self.text = self.text.replace("wikipedia", "")
-                    # self.text = self.text.replace("can", "")
-                    # self.text = self.text.replace("you", "")
-                    # self.text = self.text.replace("about", "")
-                    # self.text = self.text.replace("who", "")
-                    # self.text = self.text.replace("is", "")
-                    # self.text = self.text.replace("search", "")
+                    self.text = self.text.replace("wikipedia", "")
                     speak("what do you wanna search on wikipedia ?")
                     print("what do you wanna search on wikipedia ?")
                     cm = self.take_audio().lower()
                     speak(f"fetching info about {cm}")
                     print(f"fetching info about {cm}")
-                    try:
-                        info = wikipedia.summary(cm, 2)
-                        print(info)
-                        speak(info)
-                    except Exception as e:
-                        print("error occurred :" + str(e))
-                        print("sorry i was unable to do that due to some issue")
-                        speak("sorry i was unable to do that due to some issue")
+                    info = wikipedia.summary(cm, 2)
+                    print(info)
+                    speak(info)
                 elif "temperature" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     self.text = self.text.replace(WAKE_WORD, "")
@@ -1216,8 +1175,8 @@ class MainThread(QThread):
                     pyautogui.press("volumeup")
                     pyautogui.press("volumemute")
                 elif "unmute" in self.text:
-                    pyautogui.press("volumedown")
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    pyautogui.press("volumedown")
                 elif "next track" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     pyautogui.press("nexttrack")
@@ -1314,23 +1273,22 @@ class MainThread(QThread):
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     try:
                         def get_info():
-                            rr = sr.Recognizer()
-                            with sr.Microphone() as source_1:
-                                rr.pause_threshold = 1
-                                rr.adjust_for_ambient_noise(source_1)
-                                rr.dynamic_energy_threshold = 500
+                            r = sr.Recognizer()
+                            with sr.Microphone() as source:
+                                r.pause_threshold = 1
+                                r.adjust_for_ambient_noise(source)
+                                r.dynamic_energy_threshold = 500
                                 print('waiting...')
-                                audio_1 = r.listen(source_1, phrase_time_limit=10)
+                                audio = r.listen(source, phrase_time_limit=10)
                             try:
                                 print("Recognizing...")
-                                information = r.recognize_google(audio_1, language='en-IN')
-                                print(information)
-                                return information.lower()
-                            except Exception as f:
-                                print("error occurred :" + str(f))
+                                info = r.recognize_google(audio, language='en-IN')
+                                print(info)
+                                return info.lower()
+                            except:
                                 pass
 
-                        def send_email(receiver, subject, message_1):
+                        def send_email(receiver, subject, message):
                             server = smtplib.SMTP('smtp.gmail.com', 587)
                             server.starttls()
                             # Make sure to give app access in your Google account
@@ -1339,7 +1297,7 @@ class MainThread(QThread):
                             email['From'] = 'friday.a.i.3000@gmail.com'
                             email['To'] = receiver
                             email['Subject'] = subject
-                            email.set_content(message_1)
+                            email.set_content(message)
                             server.send_message(email)
 
                         email_list = {
@@ -1347,22 +1305,22 @@ class MainThread(QThread):
                             'mishal': 'mishaalmohammed00@gmail.com.com',
                             'sahal': 'sahalayamon@gmail.com.com',
                             'ansaf': 'ansafmohammedam7@gmail.com.com',
-                            # 'irene': 'irene@redvelvet.com'
+                            #'irene': 'irene@redvelvet.com'
                         }
 
                         def get_email_info():
                             print('To Whom do you want to send email')
                             speak('To Whom do you want to send email')
-                            name_1 = get_info()
-                            receiver = email_list[name_1]
+                            name = get_info()
+                            receiver = email_list[name]
                             print(receiver)
                             print('What is the subject of your email?')
                             speak('What is the subject of your email?')
                             subject = get_info()
                             print('Tell me the context of your email')
                             speak('Tell me the context of your email')
-                            message_1 = get_info()
-                            send_email(receiver, subject, message_1)
+                            message = get_info()
+                            send_email(receiver, subject, message)
                             print('Hey. Your email is sent')
                             speak('Hey. Your email is sent')
                             print('Do you want to send more email?')
@@ -1373,8 +1331,7 @@ class MainThread(QThread):
                                 get_email_info()
 
                         get_email_info()
-                    except Exception as e:
-                        print("error occurred :" + str(e))
+                    except:
                         pass
                 elif "send message" in self.text or "whatsapp message" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -1386,7 +1343,7 @@ class MainThread(QThread):
                     message = self.take_audio().lower()
                     speak("great , now please say the time that you want send the message")
                     print("great , now please say the time that you want send the message")
-                    # time_of_sending = self.take_audio().lower()
+                    time_of_sending = self.take_audio().lower()
                     pywhatkit.sendwhatmsg("+91" + ph_number, message, 9, 16)
                 elif "do some calculations" in self.text or "can you calculate" in self.text or "do some calculations" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -1396,8 +1353,8 @@ class MainThread(QThread):
                         reply = random.choice(possible_reply)
                         print(reply)
                         speak(reply)
-                        print("say what you want to calculate , for multiplication , say , multiplied by , for division , say , divided by , for addition , say plus , for substraction , say minus")
-                        speak("say what you want to calculate , for multiplication , say , multiplied by , for division , say , divided by , for addition , say plus , for substraction , say minus")
+                        print("say what you want to calculate , for multiplication , say , multiplied by , for division , say , divided by , for additiom , say plus , for substraction , say minus")
+                        speak("say what you want to calculate , for multiplication , say , multiplied by , for division , say , divided by , for additiom , say plus , for substraction , say minus")
                         print("waiting .....")
                         r.adjust_for_ambient_noise(source)
                         audio = r.listen(source)
@@ -1406,8 +1363,6 @@ class MainThread(QThread):
                         AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                         speak(f"here's what i heard , {my_string}")
                         print(my_string)
-
-                        # noinspection PyShadowingNames
                         def get_operator_fn(op):
                             return {
                                 '+': operator.add,  # plus
@@ -1417,7 +1372,7 @@ class MainThread(QThread):
                             }[op]
 
                         def eval_binary_expr(op1, oper, op2):  # 5 plus 8
-                            op1, op2 = int(op1), int(op2)
+                            op1,op2 = int(op1), int(op2)
                             return get_operator_fn(oper)(op1, op2)
 
                         possible_reply = ["it seems to be", "well that is", "the answer i got is "]
@@ -1426,8 +1381,7 @@ class MainThread(QThread):
                         print(reply)
                         speak(eval_binary_expr(*(my_string.split())))
                         print(eval_binary_expr(*(my_string.split())))
-                    except Exception as e:
-                        print("error occurred :" + str(e))
+                    except:
                         print("i don't know why but it seems i failed to do that")
                         speak("i don't know why but it seems i failed to do that")
                 elif "where am i" in self.text or "find my location" in self.text or "where are we" in self.text:
@@ -1435,17 +1389,16 @@ class MainThread(QThread):
                     speak("please wait , let me check")
                     print("please wait , let me check")
                     try:
-                        ipadd = requests.get('https://api.ipify.org').text
-                        url = 'https://get.geojs.io/v1/ip/geo/' + ipadd + '.json'
+                        ipAdd = requests.get('https://api.ipify.org').text
+                        url = 'https://get.geojs.io/v1/ip/geo/' + ipAdd + '.json'
                         geo_requests = requests.get(url)
                         geo_data = geo_requests.json()
-                        # print(geo_data)
+                        #print(geo_data)
                         city = geo_data['city']
                         country = geo_data['country']
                         print(f"sir , i'm not so sure , but i think we are in {city} city , of the country {country}")
                         speak(f"sir , i'm not so sure , but i think we are in {city} city , of the country {country}")
                     except Exception as e:
-                        print("error occurred : " + str(e))
                         speak("sorry sir ,  due to some network issue i'm unable to find where we are.")
                         print("sorry sir ,  due to some network issue i'm unable to find where we are.")
                         pass
@@ -1494,19 +1447,19 @@ class MainThread(QThread):
                     print("it's done sir , the screen shot is saved in the main folder")
                     img = Image.open(f"{name}.png")
                     img.show()
-                # elif "search" in self.text:
-                    # AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    # self.text = self.text.replace(WAKE_WORD, "")
-                    # speak("sure , what should i search on google ?.")
-                    # print("sure , what should i search on google ?.")
-                    # cm = self.take_audio().lower()
-                    # webbrowser.open(f"https://www.google.com/search?client=opera-gx&q=" + cm)
-                    # pass
+                #elif "search" in self.text:
+                    #AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    #self.text = self.text.replace(WAKE_WORD, "")
+                    #speak("sure , what should i search on google ?.")
+                    #print("sure , what should i search on google ?.")
+                    #cm = self.take_audio().lower()
+                    #webbrowser.open(f"https://www.google.com/search?client=opera-gx&q=" + cm)
+                    #pass
                 elif "open google" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     self.text = self.text.replace(WAKE_WORD, "")
                     self.text = self.text.replace("search", "")
-                    # search = self.text.replace("on Google", "")
+                    search = self.text.replace("on Google", "")
                     speak("sure, now opening google")
                     print("sure, now opening google")
                     webbrowser.open("https://www.google.com/search?client=opera-gx&q=")
@@ -1538,8 +1491,7 @@ class MainThread(QThread):
                         speak(info)
                         speak("i'll show the results on the web")
                         webbrowser.open("https://www.google.com/search?client=opera-gx&q=" + question)
-                    except Exception as e:
-                        print("error occurred :" + str(e))
+                    except:
                         question = self.text.replace("who is", "")
                         print(f"sorry i couldn't find anything related to {question}")
                         speak(f"sorry i couldn't find anything related to {question}")
@@ -1646,7 +1598,7 @@ class MainThread(QThread):
                         cv2.imshow('webcam', img)
                         k = cv2.waitKey(50)
                         if k == 27:
-                            break
+                            break;
                         cap.release()
                         cv2.destroyAllWindows()
                 elif "mafia 2" in self.text:
@@ -1693,7 +1645,7 @@ class MainThread(QThread):
                     os.system("shutdown /r /t /s")
                 elif "sleep the system" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    os.system("rund1132.exe powrrof.dll,SetSuspendState 0,1,0")
+                    os.system("rund1132.exe powrprof.dll,SetSuspendState 0,1,0")
                 elif "open spotify" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     self.text = self.text.replace(WAKE_WORD, "")
@@ -1749,8 +1701,7 @@ class MainThread(QThread):
                             AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                             speak("ok , i'll leave it")
                             print("ok , i'll leave it")
-                    except Exception as e:
-                        print("error occurred :" + str(e))
+                    except:
                         pass
                 elif "how to do mode" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -1774,7 +1725,6 @@ class MainThread(QThread):
                                 how_to[0].print()
                                 speak(how_to[0].summary)
                         except Exception as e:
-                            print("error occurred" + str(e))
                             speak("Sorry , i'm unable to find this")
                             print("Sorry , i'm unable to find this")
                 elif "how much power left" in self.text or "battery percentage" in self.text or "remaining charge" in self.text or "charge remaining" in self.text:
@@ -1787,17 +1737,16 @@ class MainThread(QThread):
                         if percentage >= 75:
                             speak("don't bother  there's enough juice to continue")
                             print("don't bother  there's enough juice to continue")
-                        elif 40 <= percentage <= 75:
+                        elif percentage >= 40 and percentage <= 75:
                             speak("you probably should consider charging this guy , it's already kinda low")
                             print("you probably should consider charging this guy , it's already kinda low")
-                        elif 15 <= percentage <= 30:
+                        elif percentage >= 15 and percentage <= 30:
                             speak("glad you asked , it's time to charge , there's only a quarter more left")
                             print("glad you asked , it's time to charge , there's only a quarter more left")
                         elif percentage <= 15:
                             speak("only a little bit of juice left , i really think that charging now might be a good idea")
                             print("only a little bit of juice left , i really think that charging now might be a good idea")
-                    except Exception as e:
-                        print("error occurred :" + str(e))
+                    except:
                         pass
                 elif "internet speed" in self.text or "data speed" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -1808,8 +1757,7 @@ class MainThread(QThread):
                         up = st.upload()
                         speak(f"currently there's {dl} bit per second download speed and {up} bit per second of upload speed")
                         print(f"currently there's {dl} bit per second download speed and {up} bit per second of upload speed")
-                    except Exception as e:
-                        print("error occurred :" + str(e))
+                    except:
                         speak("sorry , there's no stable internet connection")
                         print("sorry , there's no stable internet connection")
                 elif "how many voices do you have" in self.text or "change your voice" in self.text:
@@ -1866,7 +1814,7 @@ class MainThread(QThread):
                 elif "exit now" in self.text or "go to sleep" in self.text or "terminate" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     from audioplayer import AudioPlayer
-                    # AudioPlayer("F:/Hashim/friday/FRIDAY/audio/okdaa.mp3").play(block=True)
+                    #AudioPlayer("F:/Hashim/friday/FRIDAY/audio/okdaa.mp3").play(block=True)
                     speak("thank you for using my service")
                     sys.exit()
                 else:
@@ -1922,7 +1870,6 @@ class MainThread(QThread):
             elif "siri" in self.text:
                 from audioplayer import AudioPlayer
                 AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                # noinspection PyAttributeOutsideInit
                 self.text = self.text.replace(WAKE_WORD, "")
                 print("who's siri? , i'll only continue once i get an answer to this , you better tell me fast")
                 speak("who's siri? , i'll only continue once i get an answer to this , you better tell me fast")
@@ -1965,8 +1912,8 @@ class MainThread(QThread):
                 engine.setProperty('voice', voices[1].id)
                 print("did it change ? , oh yeah it's better now , sorry by the way , it's just that i cannot get rid of that jarvis guy")
                 speak("did it change ? , oh yeah it's better now , sorry by the way , it's just that i cannot get rid of that jarvis guy")
-                print("don't ever call me jarvis  , if you want him so badly  you can download it and use it separately , if you're here , then call me friday otherwise install jarvis")
-                speak("don't ever call me jarvis  , if you want him so badly  you can download it and use it separately , if you're here , then call me friday otherwise install jarvis")
+                print("don't ever call me jarvis  , if you want him so badly  you can download it and use it seperately , if you're here , then call me friday otherwise install jarvis")
+                speak("don't ever call me jarvis  , if you want him so badly  you can download it and use it seperately , if you're here , then call me friday otherwise install jarvis")
             elif "thank you" in self.text:
                 from audioplayer import AudioPlayer
                 AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -1980,10 +1927,13 @@ class MainThread(QThread):
                 speak(reply)
 
             else:
-                break
+                pass
+
 
 
 startExecution = MainThread()
+
+
 
 
 class Main(QMainWindow):
@@ -1992,25 +1942,26 @@ class Main(QMainWindow):
         super().__init__()
         self.ui = Ui_FridayGUI()
         self.ui.setupUi(self)
-        self.ui.pushButton.clicked.connect(self.starttask)
+        self.ui.pushButton.clicked.connect(self.startTask)
         self.ui.pushButton_2.clicked.connect(self.close)
 
-    def starttask(self):
+    def startTask(self):
         self.ui.movie = QtGui.QMovie("F:/Hashim/friday/friday ai - Copy/IRONMAN-HUD-2K.gif")
         self.ui.label.setMovie(self.ui.movie)
         self.ui.movie.start()
         timer = QTimer(self)
-        timer.timeout.connect(self.showtime)
+        timer.timeout.connect(self.showTime)
         timer.start(1000)
         startExecution.start()
 
-    def showtime(self):
+    def showTime(self):
         current_time = QTime.currentTime()
         current_date = QDate.currentDate()
         label_time = current_time.toString('h:mm:ss ap')
         label_date = current_date.toString(Qt.ISODate)
         self.ui.textBrowser.setText(label_date)
         self.ui.textBrowser_2.setText(label_time)
+
 
 
 app = QApplication(sys.argv)
