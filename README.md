@@ -1,7 +1,6 @@
 # FRIDAY---Desktop-Voice-Assistant-Using-Python
 This is an interesting way of interacting and learning python, it can also help you automate and voice activate some of your daily tasks. Once you get to know it's structure, feel free to customize it on your project.   ☺
 
-#######################################################
 _______________________________________________________
 first you would need to install the requires packages: 
 
@@ -33,7 +32,6 @@ first you would need to install the requires packages:
 some of the packages would come pre-installed with python. 
 __________________________________________________________
 
-#########################################################
 
 ⚙ installation ⚙
 ____________________
