@@ -210,8 +210,8 @@ class MainThread(QThread):
         return text
 
     def taskexecution(self):
-        # activation()
-        # wish()
+        activation()
+        wish()
         while True:
             from datetime import datetime
             os.system('color')
