@@ -1,6 +1,8 @@
 # FRIDAY---Desktop-Voice-Assistant-Using-Python
 This is an interesting way of interacting and learning python, it can also help you automate and voice activate some of your daily tasks. Once you get to know it's structure, feel free to customize it on your project.   ☺
 
+
+⚙ Requirements ⚙
 _______________________________________________________
 first you would need to install the requires packages: 
 
@@ -33,7 +35,7 @@ some of the packages would come pre-installed with python.
 __________________________________________________________
 
 
-⚙ installation ⚙
+⚙ Installation ⚙
 ____________________
 
 first install python 3.6 or above in your pc. (installation of an IDE is recommendend). Create the project directory in 'C' Drive. Then open friday.py and extract the audio files and other files to the same directory( C Drive). Make sure all packages are installed and check for errors( IDE's like pycharm and visual studio will help a lot). After checking , run the program and make sure all functions work properly. If there are errors, read the error message and take necessary steps to solve the error.
