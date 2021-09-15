@@ -33,6 +33,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from FridayGUI import Ui_FridayGUI
 from pywikihow import search_wikihow
+from gtts import gTTS
 
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -98,9 +99,11 @@ def check_internet_status():
                 pass
 
 
-def speak(text):
-    engine.say(text)
-    engine.runAndWait()
+def speak(audio):
+    tts = gTTS(text=audio, lang='en')
+    filename = 'voice_2.mp3'
+    tts.save(filename)
+    AudioPlayer("F:/Hashim/friday/FRIDAY/voice_2.mp3").play(block=True)
 
 
 # def sendEmail(to, content):
@@ -165,10 +168,17 @@ def wish():
 
 class MainThread(QThread):
     # noinspection PyMethodParameters
+    # def speak(audio):
+        # noinspection PyMethodParameters
+        # engine.say(str(audio))
+        # print(audio)
+        # engine.runAndWait()
+
     def speak(audio):
-        engine.say(audio)
-        print(audio)
-        engine.runAndWait()
+        tts = gTTS(text=str(audio), lang='en')
+        filename = 'voice_2.mp3'
+        tts.save(filename)
+        AudioPlayer("F:/Hashim/friday/FRIDAY/voice_2.mp3").play(block=True)
 
     def __init__(self):
         super(MainThread, self).__init__()
@@ -210,8 +220,8 @@ class MainThread(QThread):
         return text
 
     def taskexecution(self):
-        activation()
-        wish()
+        # activation()
+        # wish()
         while True:
             from datetime import datetime
             os.system('color')
@@ -283,6 +293,40 @@ class MainThread(QThread):
                     os.system('TASKKILL /F /IM notepad.exe')
                     print("you can find the saved note file in the program directory")
                     speak("you can find the saved note file in the program directory")
+                elif "translate" in self.text:
+                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    try:
+                        import translators as ts
+                        from gtts import gTTS
+                        from audioplayer import AudioPlayer
+
+                        speak("say what you want to translate")
+                        said_from = self.take_audio().lower()
+                        print("understood")
+
+                        language_list = {
+                            'malayalam': 'ml',
+                            'arabic': 'ar',
+                            'tamil': 'tn',
+                            'ansaf': 'ansafmohammedam7@gmail.com.com',
+                        }
+
+                        speak("ok. now say the language that you want to translate to")
+                        name_of_language = self.take_audio().lower()
+                        language = language_list[name_of_language]
+                        translated = ts.google(said_from, from_language='en', to_language=language)
+
+                        def speak_2(text):
+                            tts = gTTS(text=text, lang=language)
+                            filename = 'voice_2.mp3'
+                            tts.save(filename)
+                            AudioPlayer("F:/Hashim/friday/FRIDAY/voice_2.mp3").play(block=True)
+
+                        print(translated)
+                        speak_2(translated)
+
+                    except Exception as e:
+                        print(str(e))
                 elif "recognise malayalam" in self.text or "understand malayalam" in self.text or "malayalam mode" in self.text or "malayali mode" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     try:
@@ -1314,7 +1358,7 @@ class MainThread(QThread):
                             server = smtplib.SMTP('smtp.gmail.com', 587)
                             server.starttls()
                             # Make sure to give app access in your Google account
-                            server.login('friday.a.i.3000@gmail.com', 'fridaydevelopedateuforis')
+                            server.login('your_email@gmail.com', 'password')
                             email = EmailMessage()
                             email['From'] = 'friday.a.i.3000@gmail.com'
                             email['To'] = receiver
@@ -1323,10 +1367,10 @@ class MainThread(QThread):
                             server.send_message(email)
 
                         email_list = {
-                            'hashim': 'hashimshafeeque57@gmail.com',
-                            'mishal': 'mishaalmohammed00@gmail.com.com',
-                            'sahal': 'sahalayamon@gmail.com.com',
-                            'ansaf': 'ansafmohammedam7@gmail.com.com',
+                            'email_1': 'email_1@gmail.com',
+                            'email_2': 'email_2@gmail.com.com',
+                            'email_3': 'email_3@gmail.com.com',
+                            'email_4': 'email_4@gmail.com.com',
                             # 'irene': 'irene@redvelvet.com'
                         }
 
