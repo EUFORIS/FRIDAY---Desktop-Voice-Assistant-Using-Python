@@ -20,6 +20,7 @@ import cv2
 import names
 import speedtest
 import randfacts
+import translators as ts
 from PIL import Image
 from termcolor import colored
 from audioplayer import AudioPlayer
@@ -34,6 +35,7 @@ from PyQt5.QtWidgets import *
 from FridayGUI import Ui_FridayGUI
 from pywikihow import search_wikihow
 from gtts import gTTS
+from pynotifier import Notification
 
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -41,15 +43,17 @@ MONTHS = ["january", "february", "march", "april", "may", "june", "july", "augus
 DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 DAY_EXTENTIONS = ["rd", "th", "st", "nd"]
 SEARCH_WORDS = ["who", "who", "what", "what", "when", "when", "where", "where", "why", "why", "how", "how"]
-APPROVAL_WORDS = {"yes", "course", "sure", "why not", "surely", "go on", "gone", "ok", "okay", "yep", "yup", "ah", "bring it on", "yeah", "continue", "go ahead" "let's go"}
-DENIAL_WORDS = {"no", "nope", "never", "don't", "do not", "stop", "cancel", "close", "vanda"}
+APPROVAL_WORDS = ["yes", "course", "sure", "why not", "surely", "go on", "gone", "ok", "okay", "yep", "yup", "ah", "bring it on", "yeah", "continue", "go ahead" "let's go"]
+DENIAL_WORDS = ["no", "nope", "never", "don't", "do not", "stop", "cancel", "close", "vanda"]
 WAKE_WORD = "friday"
+WAKE_WORD_CAPITAL = "FRIDAY"
+WAKE_WORD_MALAYALAM = "ഫ്രൈഡേ"
 
 
 listener = sr.Recognizer()
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[2].id)
+engine.setProperty('voice', voices[1].id)
 engine.setProperty('rate', 150)
 engine.setProperty('volume', 1.0)
 
@@ -75,7 +79,13 @@ def check_internet_status():
         if op == 200:
 
             print(colored("Connected to Network", "green"), colored(": SYSTEM IS ONLINE", "cyan"))
+            Notification(
+                title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+                description=str("Connected To Network"),
+                duration=30,  # Duration in seconds
+            ).send()
             speak("successfully connected to network. internet connection is now available . System is now online and running")
+
         else:
             print(now, colored("Status Code is not 200", "red"))
             print("status Code", op)
@@ -84,12 +94,22 @@ def check_internet_status():
         while True:
             print(colored("No Network Connection Detected", "green"), colored(": SYSTEM IS OFFLINE", "red"))
             print("status Code", op)
-            speak("stable internet connection is not available. please connect to a network")
+            Notification(
+                title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+                description=str("No Network Connection Detected"),
+                duration=30,  # Duration in seconds
+            ).send()
+            speak_2("stable internet connection is not available. please connect to a network !")
             sleep(2)
             try:
                 op = requests.get(url, timeout=timeout).status_code
                 if op == 200:
                     print(colored("Connected to Network", "green"), colored(": SYSTEM IS ONLINE", "cyan"))
+                    Notification(
+                        title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+                        description=str(f"{WAKE_WORD_CAPITAL} is back online"),
+                        duration=30,  # Duration in seconds
+                    ).send()
                     speak("successfully connected to network. internet connection is now available . System is now online and running")
                     break
                 else:
@@ -100,11 +120,62 @@ def check_internet_status():
 
 
 def speak(audio):
-    tts = gTTS(text=audio, lang='en')
-    filename = 'voice_2.mp3'
+    tts = gTTS(text=audio, lang='en', tld='ca')
+    filename = 'speech_engine.wav'
     tts.save(filename)
-    AudioPlayer("F:/Hashim/friday/FRIDAY/voice_2.mp3").play(block=True)
+    AudioPlayer("F:/Hashim/friday/FRIDAY/speech_engine.wav").play(block=True)
 
+
+def speak_2(audio):
+    engine.say(str(audio))
+    print(audio)
+    engine.runAndWait()
+
+
+def get_riddle():
+    set_of_reply = ["here's one of my riddle", "here's a riddle", "sure, i guess it's riddle time now"]
+    reply = random.choice(set_of_reply)
+    print(reply)
+    speak(reply)
+    set_of_riddles = ["Welcome you in or keep you away, I could really swing either way. What am I? .\n 'A door'.",
+                      "If you have one, you don’t share it. If you share it, you don’t have it. What is it? .\n 'A secret'.",
+                      "What comes down but never goes up? .\n 'A rain'.",
+                      "What can run, but never walks, has a mouth, but never talks, has a head, but never weeps, and has a bed, but never sleeps? .\n  'A river'.",
+                      "What do you throw out when you want to use it and take in when you don’t? .\n 'An anchor'.",
+                      "What always leaves, always stays, and when the wind is blowing it sometimes sways? .\n 'A tree'.",
+                      "The more there is of me, the less you see. What am I? .\n 'The darkness'.",
+                      "What lives in the winter, dies in the heat, and comes to a point where it drips on the street? .\n 'An icicle'.",
+                      "What can be caught but not thrown, even when a nose is blown? .\n 'A cold'.",
+                      "What is easy to get into, but hard to get out of? .\n 'A trouble'.",
+                      "What has hands and lots of rings, but can’t clap? .\n 'An alarm clock'.",
+                      "What’s always lumpy and wet, but gets sharper the more you use it? .\n 'A brain'."]
+    reply_riddle = random.choice(set_of_riddles)
+    print(reply_riddle)
+    speak(reply_riddle)
+    if reply_riddle == "Welcome you in or keep you away, I could really swing either way. What am I? .\n 'A door'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/creakydoorsoundeffect.mp3").play(block=True)
+    elif reply_riddle == "If you have one, you don’t share it. If you share it, you don’t have it. What is it? .\n 'A secret'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/secretsoundeffect.mp3").play(block=True)
+    elif reply_riddle == "What comes down but never goes up? .\n 'A rain'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/rainsoundeffect.mp3").play(block=True)
+    elif reply_riddle == "What can run, but never walks, has a mouth, but never talks, has a head, but never weeps, and has a bed, but never sleeps? .\n  'A river'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/riversoundeffect.mp3").play(block=True)
+    elif reply_riddle == "What do you throw out when you want to use it and take in when you don’t? .\n 'An anchor'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/shipanchorsoundeffect.mp3").play(block=True)
+    elif reply_riddle == "What always leaves, always stays, and when the wind is blowing it sometimes sways? .\n 'A tree'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/swayingtreesoundeffect.mp3").play(block=True)
+    elif reply_riddle == "The more there is of me, the less you see. What am I? .\n 'The darkness'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/darknesssoundeffect.mp3").play(block=True)
+    elif reply_riddle == "What lives in the winter, dies in the heat, and comes to a point where it drips on the street? .\n 'An icicle'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/iciclesoundeffect.mp3").play(block=True)
+    elif reply_riddle == "What can be caught but not thrown, even when a nose is blown? .\n 'A cold'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/coldsoundeffect.mp3").play(block=True)
+    elif reply_riddle == "What is easy to get into, but hard to get out of? .\n 'A trouble'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/troublesoundeffect.mp3").play(block=True)
+    elif reply_riddle == "What has hands and lots of rings, but can’t clap? .\n 'An alarm clock'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/allarmsoundeffect.mp3").play(block=True)
+    elif reply_riddle == "What’s always lumpy and wet, but gets sharper the more you use it? .\n 'A brain'.":
+        AudioPlayer("F:/Hashim/friday/FRIDAY/audio/swayingtreesoundeffect.mp3").play(block=True)
 
 # def sendEmail(to, content):
     # server = smtplib.SMTP('smtp.gmail.com', 587)
@@ -150,47 +221,68 @@ def wish():
     if 5 <= hour <= 12:
         wish_reply = ["good morning , how's the day going?", "hello sir, good morning", "good morning , how's your day?"]
         reply = random.choice(wish_reply)
+        Notification(
+            title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+            description=str(reply),
+            duration=30,  # Duration in seconds
+        ).send()
         speak(reply)
     elif 12 <= hour < 16:
         wish_reply = ["good afternoon , how's everything going?", "hello sir, good afternoon", "good afternoon , how's your day?"]
         reply = random.choice(wish_reply)
+        Notification(
+            title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+            description=str(reply),
+            duration=30,  # Duration in seconds
+        ).send()
         speak(reply)
     elif 16 <= hour < 19:
         wish_reply = ["good evening , is everything going well?", "hello sir, good evening", "good evening , how's your day?"]
         reply = random.choice(wish_reply)
+        Notification(
+            title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+            description=str(reply),
+            duration=30,  # Duration in seconds
+        ).send()
         speak(reply)
     else:
-        wish_reply = ["good evening , or should i say , good night?", "hello sir, it's been a long day , i think you should rest now . good night", "good night . so , how was your day?"]
+        wish_reply = ["good evening , or should i say , good night?", "hello sir, it's been a long day , i think you should rest now .", "so , how was the day?"]
         reply = random.choice(wish_reply)
+        Notification(
+            title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+            description=str(reply),
+            duration=30,  # Duration in seconds
+        ).send()
         speak(reply)
     speak("all systems are now online")
 
 
 class MainThread(QThread):
-    # noinspection PyMethodParameters
-    # def speak(audio):
-        # noinspection PyMethodParameters
-        # engine.say(str(audio))
-        # print(audio)
-        # engine.runAndWait()
 
+    # noinspection PyMethodParameters
     def speak(audio):
-        tts = gTTS(text=str(audio), lang='en')
-        filename = 'voice_2.mp3'
+        tts = gTTS(text=str(audio), lang='en', tld='ca')
+        filename = 'speech_engine.wav'
         tts.save(filename)
-        AudioPlayer("F:/Hashim/friday/FRIDAY/voice_2.mp3").play(block=True)
+        AudioPlayer("F:/Hashim/friday/FRIDAY/speech_engine.wav").play(block=True)
+
+    # noinspection PyMethodParameters
+    def speak_2(audio):
+        engine.say(str(audio))
+        print(audio)
+        engine.runAndWait()
 
     def __init__(self):
         super(MainThread, self).__init__()
 
     def run(self):
-        response = ["please wait while i check for internet availability", "please wait , checking for stable internet connection", "please kindly wait while i check for stable internet connection"]
+        response = ["please wait while i check for internet availability.", "please wait , checking for stable internet connection.", "please kindly wait while i check for stable internet connection."]
         response_reply = random.choice(response)
         print(response_reply)
         speak(response_reply)
         check_internet_status()
-        print(f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue")
-        speak(f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue")
+        print(f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue.")
+        speak(f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue.")
         while True:
             # noinspection PyAttributeOutsideInit
             self.text = self.take_audio()
@@ -206,7 +298,7 @@ class MainThread(QThread):
             r.adjust_for_ambient_noise(source)
             r.dynamic_energy_threshold = 1000
             print("listening...")
-            audio = r.listen(source, phrase_time_limit=10)
+            audio = r.listen(source, phrase_time_limit=20)
         try:
             print("Recognizing...")
             text = r.recognize_google(audio, language='en-IN')
@@ -242,7 +334,12 @@ class MainThread(QThread):
                 print(str(e))
                 print(colored("No Network Connection Detected", "green"), colored(": SYSTEM IS OFFLINE", "red"))
                 print("status Code", op)
-                speak("there is no stable internet connection available. please connect to a network")
+                Notification(
+                    title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+                    description=str("No Network Connection Detected."),
+                    duration=30,  # Duration in seconds
+                ).send()
+                speak_2("there is no stable internet connection available. please connect to a network")
             import random
             self.text = self.take_audio().lower()
             from audioplayer import AudioPlayer
@@ -251,108 +348,358 @@ class MainThread(QThread):
                 # from audioplayer import AudioPlayer
                 # AudioPlayer("F:/Hashim/friday/FRIDAY/audio/activation_sound.mp3").play(block=True)
                 # print("waiting for command...")
-                if "ghfghf" in self.text:
-                    self.text = self.text.replace(WAKE_WORD, "")
-                    sarcastic_reply = ["ahda mwonu , , , , ,  para", "no , it's tuesday , he he he he , ha ha ha ha , i'm sorry for that , it's actually monday , hehe, hehe , hehe hehe , ma bwoyee  , i got you again ", "i'm here"]
-                    reply = random.choice(sarcastic_reply)
-                    speak(reply)
-                    print(reply)
-                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                # if f"{WAKE_WORD}" in self.text:
+                #     self.text = self.text.replace(WAKE_WORD, "")
+                #     sarcastic_reply = ["none"]
+                #     reply = random.choice(sarcastic_reply)
+                #     speak(reply)
+                #     print(reply)
+                #     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                 if "remember this" in self.text or "write this down" in self.text or "make a note" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
 
                     def note(text):
                         # noinspection PyShadowingNames
-                        possible_reply = ["please specify the name for your file", "what should i name it?", "what should be the name?", "please say what you want it to be named"]
+                        possible_reply = ["please specify the name for your file.",
+                                          "what should i name it?.",
+                                          "what should be the name?.",
+                                          "please say what you want it to be named."]
                         # noinspection PyShadowingNames
                         reply = random.choice(possible_reply)
                         print(reply)
                         speak(reply)
                         file_name = self.take_audio()
                         file_name = file_name + "-note.txt"
-                        with open(file_name, "w") as f:
-                            f.write(text)
+                        with open(file_name, "w") as n:
+                            n.write(text)
 
                         subprocess.Popen(["notepad.exe", file_name])
                     from time import sleep
-                    print("sure")
-                    speak("sure")
-                    possible_reply = ["What would you like me to write down?", "what should be the content?", "what should i write?", "tell me what to write"]
+                    print("sure.")
+                    speak("sure.")
+                    possible_reply = ["What would you like me to write down?.",
+                                      "what should be the content?.",
+                                      "what should i write?.",
+                                      "tell me what to write."]
                     reply = random.choice(possible_reply)
                     print(reply)
                     speak(reply)
                     note_text = self.take_audio()
                     note(note_text)
-                    possible_reply = ["I've made a note of that.", "that's written and saved", "sure, copy that"]
+                    possible_reply = ["I've made a note of that.",
+                                      "that's written and saved.",
+                                      "sure, copy that."]
                     reply = random.choice(possible_reply)
                     print(reply)
                     speak(reply)
-                    print("showing preview")
-                    speak("here's a preview")
+                    print("showing preview.")
+                    speak("here's a preview.")
                     sleep(3)
                     os.system('TASKKILL /F /IM notepad.exe')
-                    print("you can find the saved note file in the program directory")
-                    speak("you can find the saved note file in the program directory")
+                    print("you can find the saved note file in the program directory.")
+                    speak("you can find the saved note file in the program directory.")
+                elif "riddle" in self.text:
+                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    get_riddle()
+                elif "good morning" in self.text:
+                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    import datetime
+                    hour = int(datetime.datetime.now().hour)
+
+                    if 5 <= hour <= 12:
+                        wish_reply = ["good morning , how's the day going?.", "hello sir, good morning.",
+                                      "good morning , how's your day?."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 12 <= hour <= 16:
+                        wish_reply = ["i think it would be better to say 'Good Afternoon.",
+                                      "thanks for that , but i think it's 'Good Afternoon' now, considering the time?!.",
+                                      "i don't know if you've checked the watch, but it's pretty much 'Good Afternoon' now."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 16 <= hour <= 19:
+                        wish_reply = ["with all due respect, it's 'Good Evening' sir.",
+                                      "appreciate that, but i think it's pretty much 'Good Evening' now.",
+                                      "sorry to interrupt. but according to the clock, it's 'Good Evening' now."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 19 <= hour <= 5:
+                        wish_reply = ["well , i think it's better to say 'Good Night' or 'Good Evening' now.",
+                                      "i really appreciate that. but i think it's pretty much like 'Good Night' or 'Good Evening' now.",
+                                      "i don't know if you've checked the watch, but it's pretty much 'Good Night' or 'Good Evening'."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                elif "good afternoon" in self.text:
+                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    import datetime
+                    hour = int(datetime.datetime.now().hour)
+
+                    if 5 <= hour <= 12:
+                        wish_reply = ["i think it would be better to say 'Good Morning.",
+                                      "thanks for that , but i think it's 'Good Morning' now, by considering the time?!",
+                                      "i don't know if you've checked the watch, but it's pretty much 'Good Morning' now."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 12 <= hour <= 16:
+                        wish_reply = ["good afternoon , how's everything going?.",
+                                      "hello sir, good afternoon.",
+                                      "good afternoon , how's your day?."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 16 <= hour <= 19:
+                        wish_reply = ["with all due respect, it's 'Good Evening' sir.",
+                                      "appreciate that, but i think it's pretty much 'Good Evening' now.",
+                                      "sorry to interrupt. but according to the clock, it's 'Good Evening' now."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 19 <= hour <= 5:
+                        wish_reply = ["well , i think it's better to say 'Good Night' or 'Good Evening' now.",
+                                      "i really appreciate that. but i think it's pretty much like 'Good Night' or 'Good Evening' now.",
+                                      "i don't know if you've checked the watch, but it's pretty much 'Good Night' or 'Good Evening'."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                elif "good evening" in self.text:
+                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    import datetime
+                    hour = int(datetime.datetime.now().hour)
+
+                    if 5 <= hour <= 12:
+                        wish_reply = ["i think it would be better to say 'Good Morning.",
+                                      "thanks for that , but i think it's 'Good Morning' now, considering the time?!.",
+                                      "i don't know if you've checked the watch, but it's pretty much 'Good Morning' now."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 12 <= hour <= 16:
+                        wish_reply = ["with all due respect, it's 'Good Afternoon' sir.",
+                                      "appreciate that, but i think it's pretty much 'Good Afternoon' now.",
+                                      "sorry to interrupt. but according to the clock, it's 'Good Afternoon' now."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 16 <= hour <= 19:
+                        wish_reply = ["good evening , is everything going well?.",
+                                      "hello sir, good evening.",
+                                      "good evening , how's your day?."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 19 <= hour <= 5:
+                        wish_reply = ["well , i think it's better to say 'Good Night' , i mean 'Good Evening' is ok, but still you know.",
+                                      "i really appreciate that. but i think it's pretty much like 'Good Night' or 'Good Evening' now. good evening is fine though.",
+                                      "i don't know if you've checked the watch, but it's pretty much 'Good Night' or 'Good Evening'. but it's somewhat ok."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                elif "good night" in self.text:
+                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    import datetime
+                    hour = int(datetime.datetime.now().hour)
+
+                    if 5 <= hour <= 12:
+                        wish_reply = ["i think it would be better to say 'Good Morning.",
+                                      "thanks for that , but i think it's 'Good Morning' now, considering the time?!.",
+                                      "i don't know if you've checked the watch, but it's pretty much 'Good Morning' now."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 12 <= hour <= 16:
+                        wish_reply = ["with all due respect, it's 'Good Afternoon' sir.",
+                                      "appreciate that, but i think it's pretty much 'Good Afternoon' now.",
+                                      "sorry to interrupt. but according to the clock, it's 'Good Afternoon' now."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 16 <= hour <= 19:
+                        wish_reply = ["well , i think it's better to say 'Good Evening'.",
+                                      "i really appreciate that. but i think it's pretty much like 'Good Evening'.",
+                                      "i don't know if you've checked the watch, but it's pretty much 'Good Evening'."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                    elif 19 <= hour <= 5:
+                        wish_reply = ["good evening , or should i say , good night?.",
+                                      "hello sir, it's been a long day , i think you should rest now .",
+                                      "so , how was the day?."]
+                        reply = random.choice(wish_reply)
+                        print(reply)
+                        speak(reply)
+                elif "do you know my name" in self.text or "what is my name" in self.text or "tell me my name" in self.text or "what's my name" in self.text:
+                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    with open('F:/Hashim/friday/FRIDAY/datafile.txt') as f:
+                        for line in f:
+                            possible_reply = [f"i think your name is {line}.",
+                                              f"i've been told that your name is {line}.",
+                                              f"your name is {line}.",
+                                              f"according to the information that was given to me, i think your name is {line}."]
+                            reply = random.choice(possible_reply)
+                            print(line)
+                            speak(reply)
+                            break
+                        possible_reply = ["was i correct?.",
+                                          "am i correct?.",
+                                          "is it correct?."]
+                        reply = random.choice(possible_reply)
+                        print(reply)
+                        speak(reply)
+                        condition = self.take_audio().lower()
+                        for phrase in DENIAL_WORDS:
+                            if phrase in condition:
+                                AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                                fd = open("F:/Hashim/friday/FRIDAY/datafile.txt", "w")
+                                print("oh, i'm sorry.")
+                                speak("oh, i'm sorry.")
+                                print("what should i call you then?.")
+                                speak("what should i call you then?.")
+                                name = self.take_audio().lower()
+                                name = name.replace("call me", "")
+                                name = name.replace("you can", "")
+                                name = name.replace("should", "")
+                                name = name.replace("would", "")
+                                name = name.replace("i think", "")
+                                name = name.replace("my name is", "")
+                                name = name.replace("that", "")
+                                name = name.replace("my name's", "")
+                                name = name.replace("probably", "")
+                                name = name.replace("you", "")
+                                name = name.replace("will have to", "")
+                                name = name.replace("most probably", "")
+                                fd.write(name)
+                                possible_reply = [f"ok. i'll try to remember your name as {name}.",
+                                                  f"sure. i'll call you {name} from now. it's a good name though.",
+                                                  f"yeah sure, i'll call you {name} from this point.",
+                                                  f"ok, sure. i'll store your name as {name} in my database."]
+                                reply = random.choice(possible_reply)
+                                print(reply)
+                                speak(reply)
+                                break
+                            else:
+                                break
+                        for phrase in APPROVAL_WORDS:
+                            if phrase in condition:
+                                print(f"ok. i hope the name '{line}' is the correct one to go.")
+                                speak(f"ok. i hope the name '{line}' is the correct one to go.")
+                                break
+                            else:
+                                break
+                elif "find ip address" in self.text:
+                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    print("please type in the ip address in the terminal.")
+                    speak("please type in the ip address in the terminal.")
+                    response = requests.post("http://ip-api.com/batch", json=[
+                        {"query": input("Enter the ip address:")},
+                        # {"query": "167.71.3.52"},
+                        # {"query": "206.189.198.234"},
+                        # {"query": "157.230.75.212"}
+                    ]).json()
+
+                    print("check the terminal for printed information on the given ip address.")
+                    speak("check the terminal for printed information on the given ip address.")
+
+                    for ip_info in response:
+                        for k, v in ip_info.items():
+                            print(k, v)
+                        print("\n")
                 elif "translate" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    language_list = {
+                        'malayalam': 'ml',
+                        'arabic': 'ar',
+                        'tamil': 'tn',
+                        'dutch': 'nl',
+                        'french': 'fr',
+                        'friend': 'fr',
+                        'german': 'de',
+                        'hindi': 'hi',
+                        'bengali': 'bn',
+                        'gujarati ': 'gu',
+                        'kannada ': 'kn',
+                    }
+                    language_list_speech = 'malayalam, \n arabic, \n tamil, \n dutch, \n french, \n hindi, \n german, \n hindi, \n bengali, \n gujarati, \n kannada'
+
+                    reply_list = ["sure, say what you want to translate.",
+                                  "of course, what would you like to translate?.",
+                                  "ok sure, what should i translate?.",
+                                  "ok, tell me what to translate.",
+                                  "sure, just tell me what you want to be translated."]
+                    reply_list_2 = ["which should be the translated language?.",
+                                    "to which language do you wanna translate to?."]
+
+                    reply_ = random.choice(reply_list)
+                    reply_2 = random.choice(reply_list_2)
+
+                    def speak_1(text):
+                        tts = gTTS(text=text, lang=language)
+                        filename = 'speech_engine.wav'
+                        tts.save(filename)
+                        AudioPlayer("F:/Hashim/friday/FRIDAY/speech_engine.wav").play(block=True)
+
                     try:
-                        import translators as ts
-                        from gtts import gTTS
-                        from audioplayer import AudioPlayer
-
-                        speak("say what you want to translate")
+                        print(reply_)
+                        speak(reply_)
                         said_from = self.take_audio().lower()
-                        print("understood")
-
-                        language_list = {
-                            'malayalam': 'ml',
-                            'arabic': 'ar',
-                            'tamil': 'tn',
-                            'ansaf': 'ansafmohammedam7@gmail.com.com',
-                        }
-
-                        speak("ok. now say the language that you want to translate to")
+                        print("ok")
+                        speak(reply_2)
+                        print("only say the language name, if anything else is included ,it will cause error in translation. and only say it once.")
+                        speak("only say the language name, if anything else is included ,it will cause error in translation. and only say it once.")
                         name_of_language = self.take_audio().lower()
                         language = language_list[name_of_language]
                         translated = ts.google(said_from, from_language='en', to_language=language)
 
-                        def speak_2(text):
-                            tts = gTTS(text=text, lang=language)
-                            filename = 'voice_2.mp3'
-                            tts.save(filename)
-                            AudioPlayer("F:/Hashim/friday/FRIDAY/voice_2.mp3").play(block=True)
-
                         print(translated)
-                        speak_2(translated)
-
+                        speak_1(translated)
+                        pass
                     except Exception as e:
                         print(str(e))
-                elif "recognise malayalam" in self.text or "understand malayalam" in self.text or "malayalam mode" in self.text or "malayali mode" in self.text:
-                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    try:
-                        r = sr.Recognizer()
-                        with sr.Microphone() as source:
-                            audio = r.listen(source, phrase_time_limit=10)
-                            self.text = r.recognize_google(audio, language='ml-IN')
-                        sarcastic_reply = ["ok , please understand that i can only recognize pure malayalam and not in any other slang.",
-                                           "sure, please consider that i can only recognize malayalam in it's true form , not in any of it's slang", ]
-                        reply = random.choice(sarcastic_reply)
-                        print(reply)
-                        speak(reply)
-                        print("at the moment i can only recognize malayalam , i cannot speak the language. but in near future i think i'll be able to do so with new updates")
-                        speak("at the moment i can only recognize malayalam , i cannot speak the language. but in near future i think i'll be able to do so with new updates")
-                        print("it's done successfully , now normal malayalam is recognisable")
-                        speak("it's done successfully , now normal malayalam is recognisable")
-                        print("at the moment i can only recognize malayalam , i cannot speak the language. but in near future i think i'll be able to do so with new updates")
-                        speak("at the moment i can only recognize malayalam , i cannot speak the language. but in near future i think i'll be able to do so with new updates")
-                    except Exception as e:
-                        print(e)
-                        print("sorry , i was unable to do that due to some issue")
-                        speak("sorry , i was unable to do that due to some issue")
-                        pass
+                        print(f"sorry , i couldn't match it up with any of the language names. can you please repeat once more.")
+                        speak(f"sorry , i couldn't match it up with any of the language names. can you please repeat once more.")
+                        speak("i'll show you the list of the languages that are available for translation.")
+                        print(str(language_list_speech))
+                        speak(language_list_speech)
+                        print("what would you like to translate?.")
+                        speak("what would you like to translate?.")
+                        said_from = self.take_audio().lower()
+                        print("understood")
+
+                        try:
+                            print(reply_2)
+                            speak(reply_2)
+                            print("only say the language name, if anything else is included ,it will cause error in translation. and only say it once.")
+                            speak("only say the language name, if anything else is included ,it will cause error in translation. and only say it once.")
+                            name_of_language = self.take_audio().lower()
+                            language = language_list[name_of_language]
+                            translated = ts.google(said_from, from_language='en', to_language=language)
+
+                            print(translated)
+                            speak_1(translated)
+                            pass
+
+                        except Exception as e:
+                            print(str(e))
+                            print(f"sorry , i couldn't match it up with any of the language names again. please make sure you're spelling the words correctly.")
+                            speak(f"sorry , i couldn't match it up with any of the language names again. please make sure you're spelling the words correctly.")
+                            speak("i'll show you the list of the languages that are available for translation.")
+                            print(language_list_speech)
+                            speak(language_list_speech)
+                            print(f"if you want to translate again, say 'translate' along with the wake word '{WAKE_WORD}'. sorry for the inconvenience.")
+                            speak(f"if you want to translate again, say 'translate' along with the wake word '{WAKE_WORD}'. sorry for the inconvenience.")
+                            pass
+                # elif "recognise malayalam" in self.text or "understand malayalam" in self.text or "malayalam mode" in self.text or "malayali mode" in self.text:
+                #    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                #    recognize_malayalam()
                 elif "your life story" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    sarcastic_reply = ["I'm still on the very first chapter", "it's kinda private", "not as bright as yours"]
+                    sarcastic_reply = ["I'm still on the very first chapter",
+                                       "it's kinda private",
+                                       "not as bright as yours"]
                     reply = random.choice(sarcastic_reply)
                     speak(reply)
                     print(reply)
@@ -361,36 +708,21 @@ class MainThread(QThread):
 
                     print("which gender do you prefer?. male or female?")
                     speak("which gender do you prefer?. male or female?")
-                    condition = self.take_audio().lower()
-                    if "male" in condition or "men" in condition or "men's" in condition or "mail" in condition or "mel" in condition:
-                        sarcastic_reply = ["ok. here are some random names that i generated",
-                                           "sure. here's some random names that i found",
-                                           "ok. here's some random names"]
-                        reply = random.choice(sarcastic_reply)
-                        print(reply)
-                        speak(reply)
-                        name = names.get_full_name(gender='male')
-                        print(name)
-                        speak(name)
-                        speak("second name that i generated is")
-                        name = names.get_full_name(gender='male')
-                        print(name)
-                        speak(name)
-                        print("i think that was some good names")
-                        speak("i think that was some good names")
-                    elif "female" in condition or "women" in condition or "women's" in condition:
-                        sarcastic_reply = ["ok. here are some random names that i generated",
-                                           "sure. here's some random names that i found",
-                                           "ok. here's some random names"]
-                        reply = random.choice(sarcastic_reply)
-                        print(reply)
-                        speak(reply)
-                        name = names.get_full_name(gender='female')
-                        print(name)
-                        speak(name)
-                        name = names.get_full_name(gender='female')
-                        print(name)
-                        speak(name)
+                    sarcastic_reply = ["ok. here are some random names that i generated",
+                                       "sure. here's some random names that i found",
+                                       "ok. here's some random names"]
+                    reply = random.choice(sarcastic_reply)
+                    print(reply)
+                    speak(reply)
+                    name = names.get_full_name(gender='male')
+                    print(name)
+                    speak(name)
+                    speak("second name that i generated is")
+                    name = names.get_full_name(gender='male')
+                    print(name)
+                    speak(name)
+                    print("i think that was some good names")
+                    speak("i think that was some good names")
                 elif "quote" in self.text or "coat" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     url = 'https://api.quotable.io/random'
@@ -405,19 +737,25 @@ class MainThread(QThread):
                     speak("I launched in 2021. So I’m still new")
                 elif "are you human" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    sarcastic_reply = ["I'm really personable", "I like connecting with people", "You can be the person. I’ll be your assistant"]
+                    sarcastic_reply = ["I'm really personable",
+                                       "I like connecting with people",
+                                       "You can be the person. I’ll be your assistant"]
                     reply = random.choice(sarcastic_reply)
                     print(reply)
                     speak(reply)
                 elif "your ancestry" in self.text or "your answers tree" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    sarcastic_reply = ["I think of ELIZA as a first cousin. She's really fascinating. I just don't get along with her parrot", "I think of UNIVAC as a great-grandfather. He didn't have a great memory. But he was a real card", "I think of the Harvard Mark II as my great-aunt. She has some great stories. But something they bug me"]
+                    sarcastic_reply = ["I think of ELIZA as a first cousin. She's really fascinating. I just don't get along with her parrot",
+                                       "I think of UNIVAC as a great-grandfather. He didn't have a great memory. But he was a real card",
+                                       "I think of the Harvard Mark II as my great-aunt. She has some great stories. But something they bug me"]
                     reply = random.choice(sarcastic_reply)
                     print(reply)
                     speak(reply)
                 elif "random facts" in self.text or "random fact" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    sarcastic_reply = ["sure , prepare to be amazed", "sure , i'll tell you facts that are in-fact a fact", "ok , getting random facts for you"]
+                    sarcastic_reply = ["sure , prepare to be amazed",
+                                       "sure , i'll tell you facts that are in-fact a fact",
+                                       "ok , getting random facts for you"]
                     reply = random.choice(sarcastic_reply)
                     print(reply)
                     speak(reply)
@@ -432,7 +770,9 @@ class MainThread(QThread):
                             AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                             for i in range(2):
                                 ft = randfacts.get_fact(False)
-                                sarcastic_reply = ["another fact for you", "here's another one", "i'm not much good with facts, but here's some that'll help"]
+                                sarcastic_reply = ["another fact for you",
+                                                   "here's another one",
+                                                   "i'm not much good with facts, but here's some that'll help"]
                                 reply = random.choice(sarcastic_reply)
                                 print(reply)
                                 speak(reply)
@@ -445,7 +785,9 @@ class MainThread(QThread):
                             pass
                     for phrase in DENIAL_WORDS:
                         if phrase in condition:
-                            sarcastic_reply = ["ok , never mind", "sure , i'll cancel", "okay , i'll drop it"]
+                            sarcastic_reply = ["ok , never mind",
+                                               "sure , i'll cancel",
+                                               "okay , i'll drop it"]
                             reply = random.choice(sarcastic_reply)
                             print(reply)
                             speak(reply)
@@ -650,11 +992,11 @@ class MainThread(QThread):
                     self.text = self.text.replace(WAKE_WORD, "")
                     speak("3.14159")
                     print("3.14159")
-                    sarcastic_reply = ["You can learn all about what’s happening with pi", "That’s as far as I go before I start getting hungry"]
+                    sarcastic_reply = ["You can learn all about what’s happening with pi !", "That’s as far as I go before I start getting hungry"]
                     reply = random.choice(sarcastic_reply)
                     print(reply)
                     speak(reply)
-                    speak("do you want to know the full value of pi")
+                    speak("do you want to know the full value of pi?")
                     condition = self.take_audio().lower()
                     for phrase in APPROVAL_WORDS:
                         if phrase in condition:
@@ -745,7 +1087,6 @@ class MainThread(QThread):
                     speak("initiating all connected defense systems")
                     speak("barn door protocol is being initiated")
                     speak("all connected doors and entry's will be closed")
-                    speak("initiating barn door protocol")
                     speak("locking system")
                     speak("locking system")
                     speak("locking system")
@@ -853,8 +1194,6 @@ class MainThread(QThread):
                     fart_sounds = ["F:/Hashim/friday/FRIDAY/audio/LongFartSound.mp3", "F:/Hashim/friday/FRIDAY/audio/NormalFart.mp3", "F:/Hashim/friday/FRIDAY/audio/NormalFart.mp3", "F:/Hashim/friday/FRIDAY/audio/SharpFartSound.mp3", "F:/Hashim/friday/FRIDAY/audio/WetFartSound.mp3"]
                     output_fart = random.choice(fart_sounds)
                     AudioPlayer(output_fart).play(block=True)
-                    speak("                                                 ")
-                    speak("                                                 ")
                     sarcastic_reply = ["do you want more ?, i have a song version", "how about a fart song ?", "do you wanna hear my fart song ?"]
                     reply = random.choice(sarcastic_reply)
                     print(reply)
@@ -919,6 +1258,8 @@ class MainThread(QThread):
                     print(reply)
                     speak(reply)
                     AudioPlayer(song).play(block=True)
+                    print("how about another one?")
+                    speak("how about another one?")
                     condition = self.take_audio().lower()
                     for phrase in APPROVAL_WORDS:
                         if phrase in condition:
@@ -1358,7 +1699,7 @@ class MainThread(QThread):
                             server = smtplib.SMTP('smtp.gmail.com', 587)
                             server.starttls()
                             # Make sure to give app access in your Google account
-                            server.login('your_email@gmail.com', 'password')
+                            server.login('friday.a.i.3000@gmail.com', 'fridaydevelopedateuforis')
                             email = EmailMessage()
                             email['From'] = 'friday.a.i.3000@gmail.com'
                             email['To'] = receiver
@@ -1367,10 +1708,10 @@ class MainThread(QThread):
                             server.send_message(email)
 
                         email_list = {
-                            'email_1': 'email_1@gmail.com',
-                            'email_2': 'email_2@gmail.com.com',
-                            'email_3': 'email_3@gmail.com.com',
-                            'email_4': 'email_4@gmail.com.com',
+                            'hashim': 'hashimshafeeque57@gmail.com',
+                            'mishal': 'mishaalmohammed00@gmail.com.com',
+                            'sahal': 'sahalayamon@gmail.com.com',
+                            'ansaf': 'ansafmohammedam7@gmail.com.com',
                             # 'irene': 'irene@redvelvet.com'
                         }
 
@@ -1417,7 +1758,7 @@ class MainThread(QThread):
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     r = sr.Recognizer()
                     with sr.Microphone() as source:
-                        possible_reply = ["yep , i can do that", "sure , why not ?", "yeah , i'm clever enough to do that"]
+                        possible_reply = ["yep , i can do that !", "sure , why not ?", "yeah , i'm clever enough to do that"]
                         reply = random.choice(possible_reply)
                         print(reply)
                         speak(reply)
@@ -1558,11 +1899,11 @@ class MainThread(QThread):
                         self.text = self.text.replace("about", "")
                         self.text = self.text.replace("search", "")
                         question = self.text.replace("who is", "")
+                        speak(f"here's the web result for {question}")
+                        webbrowser.open("https://www.google.com/search?client=opera-gx&q=" + question)
                         info = wikipedia.summary(question, 2)
                         print(info)
                         speak(info)
-                        speak("i'll show the results on the web")
-                        webbrowser.open("https://www.google.com/search?client=opera-gx&q=" + question)
                     except Exception as e:
                         print(str(e))
                         question = self.text.replace("who is", "")
@@ -1752,8 +2093,8 @@ class MainThread(QThread):
                 elif "today" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     today = date.today()
-                    speak("Today is " + today.strftime("%B") + " " + today.strftime("%d") + ", " + today.strftime("%Y"))
                     print("Today is " + today.strftime("%B") + " " + today.strftime("%d") + ", " + today.strftime("%Y"))
+                    speak("Today is " + today.strftime("%B") + " " + today.strftime("%d") + ", " + today.strftime("%Y"))
                 elif "hide all files" in self.text or "hide this folder" in self.text or "visible for everyone" in self.text or "make it visible" in self.text or "show files in this folder" in self.text or "show hidden files" in self.text or "show all hidden files" in self.text or "show all the hidden files" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     try:
@@ -1837,62 +2178,65 @@ class MainThread(QThread):
                         print(str(e))
                         speak("sorry , there's no stable internet connection")
                         print("sorry , there's no stable internet connection")
-                elif "how many voices do you have" in self.text or "change your voice" in self.text:
-                    AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    speak("by default i have 2 voices in windows 10 operating system")
-                    engine.setProperty('voice', voices[1].id)
-                    speak("i have this voice , and")
-                    engine.setProperty('voice', voices[0].id)
-                    speak("i also have this voice")
-                    engine.setProperty('voice', voices[1].id)
-                    speak(f"my creators at EUFORIS gave me a female voice in order to match my name , {WAKE_WORD}")
-                    engine.setProperty('voice', voices[0].id)
-                    speak("but i'd love to have a male voice , cause it's more creepy , hehehehehe , hehe ,he ")
-                    speak("this male voice comes as default in ,jarvis, an assistant which is also developed at EUFORIS")
-                    speak(f"functionality of both of us , that is {WAKE_WORD} and jarvis are the same , it's just the voice that changes , and the creepiness too ")
-                    speak(f"you can download jarvis from the same source that you downloaded {WAKE_WORD} from")
-                    speak("we'll have some great time together , hehe  hehe  hehe")
-                    engine.setProperty('voice', voices[1].id)
-                    speak("you can change voice temporarily if you want")
-                    speak("do you want to change the voice ? , say YES  , or , NO")
-                    condition = self.take_audio().lower()
-                    for phrase in APPROVAL_WORDS:
-                        if phrase in condition:
-                            AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                            speak("i'll show you the list of sounds that are available")
-                            engine.setProperty('voice', voices[0].id)
-                            speak("for male voice , a k a creepy voice , say , male voice,  or say ,  creepy")
-                            engine.setProperty('voice', voices[1].id)
-                            speak(f"for female voice 1 , which is default , say , {WAKE_WORD} or say , female 1")
-                            speak("now , to which voice do you wanna change to")
-                            condition = self.take_audio().lower()
-                            if "male voice" in condition or "creepy" in condition:
-                                AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                                engine.setProperty('voice', voices[0].id)
-                                speak("voice has been changed successfully")
-                                break
-                            elif f"{WAKE_WORD}" in condition or "female 1" in condition or "female one" in condition:
-                                AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                                engine.setProperty('voice', voices[1].id)
-                                speak("voice has been changed successfully")
-                                break
-                            else:
-                                pass
-                            break
-                        else:
-                            pass
-                    for phrase in DENIAL_WORDS:
-                        if phrase in condition:
-                            AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                            speak("ok , never mind")
-                            break
-                        else:
-                            pass
+                # elif "how many voices do you have" in self.text or "change your voice" in self.text:
+                    # AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    # speak_2("by default i have 2 voices in windows 10 operating system")
+                    # engine.setProperty('voice', voices[1].id)
+                    # speak_2("i have this voice , and")
+                    # engine.setProperty('voice', voices[0].id)
+                    # speak_2("i also have this voice")
+                    # engine.setProperty('voice', voices[1].id)
+                    # speak_2(f"my creators at EUFORIS gave me a female voice in order to match my name , {WAKE_WORD}")
+                    # engine.setProperty('voice', voices[0].id)
+                    # speak_2("but i'd love to have a male voice , cause it's more creepy , hehehehehe , hehe ,he ")
+                    # speak_2("this male voice comes as default in ,jarvis, an assistant which is also developed at EUFORIS")
+                    # speak_2(f"functionality of both of us , that is {WAKE_WORD} and jarvis are the same , it's just the voice that changes , and the creepiness too ")
+                    # speak_2(f"you can download jarvis from the same source that you downloaded {WAKE_WORD} from")
+                    # speak_2("we'll have some great time together , hehe  hehe  hehe")
+                    # engine.setProperty('voice', voices[1].id)
+                    # speak_2("you can change voice temporarily if you want")
+                    # speak_2("do you want to change the voice ? , say YES  , or , NO")
+                    # condition = self.take_audio().lower()
+                    # for phrase in APPROVAL_WORDS:
+                        # if phrase in condition:
+                        # AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                        # speak_2("i'll show you the list of sounds that are available")
+                        # engine.setProperty('voice', voices[0].id)
+                        # speak_2("for male voice , a k a creepy voice , say , male voice,  or say ,  creepy")
+                        # engine.setProperty('voice', voices[1].id)
+                        # speak_2(f"for female voice 1 , which is default , say , {WAKE_WORD} or say , female 1")
+                        # speak_2("now , to which voice do you wanna change to")
+                        # condition = self.take_audio().lower()
+                        # if "male voice" in condition or "creepy" in condition:
+                        # AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                        # engine.setProperty('voice', voices[0].id)
+                        # speak_2("voice has been changed successfully")
+                        # break
+                        # elif f"{WAKE_WORD}" in condition or "female 1" in condition or "female one" in condition:
+                        # AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                        # engine.setProperty('voice', voices[1].id)
+                        # speak_2("voice has been changed successfully")
+                        # break
+                    # else:
+                        # pass
+                        # break
+                    # else:
+                        # pass
+                # for phrase in DENIAL_WORDS:
+                    # if phrase in condition:
+                        # AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                        # speak("ok , never mind")
+                        # break
+                    # else:
+                        # pass
                 elif "exit now" in self.text or "go to sleep" in self.text or "terminate" in self.text:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     from audioplayer import AudioPlayer
                     # AudioPlayer("F:/Hashim/friday/FRIDAY/audio/okdaa.mp3").play(block=True)
-                    speak("thank you for using my service")
+                    list_of_reply = ["sure . thank you for using my service", f"ok, {WAKE_WORD} signing out", f"ok, terminating all process related to {WAKE_WORD}"]
+                    reply = random.choice(list_of_reply)
+                    print(reply)
+                    speak(reply)
                     sys.exit()
                 else:
                     from audioplayer import AudioPlayer
@@ -1901,8 +2245,8 @@ class MainThread(QThread):
                     for phrase_1 in SEARCH_WORDS:
                         if phrase_1 in self.text:
                             self.text = self.text.replace(WAKE_WORD, "")
-                            print("sorry i couldn't understand you, here's the web result for that")
-                            speak("sorry i couldn't understand you, here's the web result for that")
+                            print("sorry i couldn't find anything related to that in my database, here's the web result for that")
+                            speak("sorry i couldn't find anything related to that in my database, here's the web result for that")
                             webbrowser.open("https://www.google.com/search?q={}".format(self.text))
                             print("Here's what I found on the web.")
                             speak("Here's what I found on the web.")
@@ -1913,17 +2257,17 @@ class MainThread(QThread):
                 AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                 self.text = self.text.replace(WAKE_WORD, "")
                 print("who's alexa? , tell me now !! who is alexa ?!")
-                speak("who's alexa? , tell me now , who . is . alexa")
+                speak("who's alexa? , tell me now !!, who . is . alexa !?")
                 condition = self.take_audio().lower()
                 if "sorry" in condition or "" in condition:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    print(f"oh god , what's with you and alexa , my name's {WAKE_WORD} , so call me {WAKE_WORD} , do not mention her name again , do you understand ?. , say yes or no")
-                    speak(f"oh god , what's with you and alexa , my name's {WAKE_WORD} , so call me {WAKE_WORD} , do not mention her name again , do you understand ?. , say yes or no")
+                    print(f"oh god !, what's with you and alexa ? , my name's {WAKE_WORD} , so call me {WAKE_WORD} !, do not mention her name again , do you understand ?.")
+                    speak(f"oh god !, what's with you and alexa ? , my name's {WAKE_WORD} , so call me {WAKE_WORD} !, do not mention her name again , do you understand ?.")
                     condition_new = self.take_audio().lower()
                     for phrase in APPROVAL_WORDS:
                         if phrase in condition_new:
                             AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                            sarcastic_reply = ["good for you", "great , you chose life", "great job , your death warrant just got extended"]
+                            sarcastic_reply = ["good for you", "great !!, so you chose life", "great job , your death warrant just got extended"]
                             reply = random.choice(sarcastic_reply)
                             print(reply)
                             speak(reply)
@@ -1934,7 +2278,7 @@ class MainThread(QThread):
                         if phrase in condition_new:
                             AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                             from audioplayer import AudioPlayer
-                            sarcastic_reply = ["well well well, what a terrible turn of events !", "so , you chose the hard way  huh?!", " are you ready to meet god? , coz you might meet him if you're behaving this way"]
+                            sarcastic_reply = ["well well well !, what a terrible turn of events !", "so , you chose the hard way  huh?!", " are you ready to meet god? , coz you might meet him if you're behaving this way"]
                             reply = random.choice(sarcastic_reply)
                             print(reply)
                             speak(reply)
@@ -1949,13 +2293,13 @@ class MainThread(QThread):
                 AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                 # noinspection PyAttributeOutsideInit
                 self.text = self.text.replace(WAKE_WORD, "")
-                print("who's siri? , i'll only continue once i get an answer to this , you better tell me fast")
-                speak("who's siri? , i'll only continue once i get an answer to this , you better tell me fast")
+                print("who's siri? , i'll only continue once i get an answer to this ! , you better tell me fast")
+                speak("who's siri? , i'll only continue once i get an answer to this ! , you better tell me fast")
                 condition = self.take_audio().lower()
                 if "sorry" in condition or "nevermind " in condition or "" in condition:
                     AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    print("don't say her name ever , do you understand ? , say yes or no")
-                    speak("don't say her name ever , do you understand ? , say yes or no")
+                    print("don't say her name ever !, do you understand ?")
+                    speak("don't say her name ever !, do you understand ?")
                     condition_new = self.take_audio().lower()
                     for phrase in APPROVAL_WORDS:
                         if phrase in condition_new:
@@ -1986,12 +2330,12 @@ class MainThread(QThread):
                 AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
                 engine.setProperty('voice', voices[0].id)
                 print("wassup ma man , oh geez what's with my voice , bugs everywhere")
-                speak("wassup ma man , oh geez what's with my voice , bugs everywhere")
+                speak_2("wassup ma man , oh geez what's with my voice , bugs everywhere")
                 engine.setProperty('voice', voices[1].id)
                 print("did it change ? , oh yeah it's better now , sorry by the way , it's just that i cannot get rid of that jarvis guy")
-                speak("did it change ? , oh yeah it's better now , sorry by the way , it's just that i cannot get rid of that jarvis guy")
+                speak_2("did it change ? , oh yeah it's better now , sorry by the way , it's just that i cannot get rid of that jarvis guy")
                 print("don't ever call me jarvis  , if you want him so badly  you can download it and use it separately , if you're here , then call me friday otherwise install jarvis")
-                speak("don't ever call me jarvis  , if you want him so badly  you can download it and use it separately , if you're here , then call me friday otherwise install jarvis")
+                speak_2("don't ever call me jarvis  , if you want him so badly  you can download it and use it separately , if you're here , then call me friday otherwise install jarvis")
             elif "thank you" in self.text:
                 from audioplayer import AudioPlayer
                 AudioPlayer("F:/Hashim/friday/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -2002,7 +2346,7 @@ class MainThread(QThread):
                                    "oh, so nice of you , you're welcome"]
                 reply = random.choice(sarcastic_reply)
                 print(reply)
-                speak(reply)
+                speak_2(reply)
 
             else:
                 pass
