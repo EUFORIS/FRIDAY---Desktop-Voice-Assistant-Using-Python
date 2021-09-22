@@ -11,6 +11,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
+# noinspection PyShadowingNames,PyAttributeOutsideInit,SpellCheckingInspection
 class Ui_FridayGUI(object):
     def setupUi(self, FridayGUI):
         FridayGUI.setObjectName("FridayGUI")
@@ -43,7 +44,7 @@ class Ui_FridayGUI(object):
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setGeometry(QtCore.QRect(0, 0, 1991, 1061))
         self.label.setText("")
-        self.label.setPixmap(QtGui.QPixmap("F:/Hashim/friday/friday ai - Copy/IRONMAN-HUD-2K.gif"))
+        self.label.setPixmap(QtGui.QPixmap("F:/Hashim/friday/FRIDAY/IRONMAN-HUD-2K.gif"))
         self.label.setScaledContents(True)
         self.label.setObjectName("label")
         self.textBrowser = QtWidgets.QTextBrowser(self.centralwidget)
