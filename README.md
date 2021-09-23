@@ -30,6 +30,9 @@ first you would need to install the requires packages:
    22. PyQt5
    23. email
    24. pywikihow
+   25. selenium
+   26. translator
+   27. pynotifier
 
 some of the packages would come pre-installed with python. 
 __________________________________________________________
