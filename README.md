@@ -41,7 +41,7 @@ __________________________________________________________
 ⚙ Installation ⚙
 ____________________
 
-first install python 3.6 or above in your pc. (installation of an IDE is recommendend). Create the project directory in 'C' Drive. Then open friday.py and extract the audio files and other files to the same directory( C Drive). Make sure all packages are installed and check for errors( IDE's like pycharm and visual studio will help a lot). After checking , run the program and make sure all functions work properly. If there are errors, read the error message and take necessary steps to solve the error.
+first install python 3.6 or above in your pc. (installation of an IDE is recommendend). Create the project directory in 'C:/FRIDAY' Drive. Then open friday.py and extract the audio files and other files to the same directory( "C:/FRIDAY" ). Make sure all packages are installed and check for errors( IDE's like pycharm and visual studio will help a lot). After checking , run the program and make sure all functions work properly. If there are errors, read the error message and take necessary steps to solve the error.
  
 if you encounter any errors that you are unable to solve , feel free to mail the issue and error message to - hashimshafeeque57@gmail.com -
 
