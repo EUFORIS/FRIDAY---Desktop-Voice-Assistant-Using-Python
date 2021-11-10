@@ -21,7 +21,9 @@ import names
 import speedtest
 import randfacts
 import translators as ts
-from PIL import Image
+from tkinter import Label
+from tkinter import Tk
+from PIL import Image, ImageTk
 from termcolor import colored
 from audioplayer import AudioPlayer
 from datetime import date
@@ -60,6 +62,40 @@ engine.setProperty('volume', 1.0)
 rate = engine.getProperty('rate')
 volume = engine.getProperty('volume')
 voice = engine.getProperty('voice')
+
+text = ''
+speak_print = ''
+
+
+# noinspection PyShadowingNames,PyAttributeOutsideInit,SpellCheckingInspection
+def take_audio():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        r.pause_threshold = 1
+        r.adjust_for_ambient_noise(source)
+        r.dynamic_energy_threshold = 1000
+        print("listening...")
+        audio = r.listen(source, phrase_time_limit=20)
+    try:
+        print("Recognizing...")
+        global text
+        text = r.recognize_google(audio, language='en-IN')
+        print(f"user said: {text}")
+
+    except Exception as e:
+        print(str(e))
+        # speak("can you please repeat the command ?")
+        return "none"
+    text = text.lower()
+    return text
+
+
+def output():
+    return text
+
+
+def output_2():
+    return speak
 
 
 def check_internet_status():
@@ -130,6 +166,295 @@ def speak_2(audio):
     engine.say(str(audio))
     print(audio)
     engine.runAndWait()
+
+
+def wish_face_id():
+    # noinspection PyShadowingNames,PyAttributeOutsideInit,SpellCheckingInspection
+    import datetime
+    hour = int(datetime.datetime.now().hour)
+
+    if 5 <= hour <= 12:
+        wish_reply = ["good morning , how's the day going?", "good morning",
+                      "good morning , how's your day?"]
+        reply = random.choice(wish_reply)
+        Notification(
+            title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+            description=str(reply),
+            duration=30,  # Duration in seconds
+        ).send()
+    elif 12 <= hour < 16:
+        wish_reply = ["good afternoon , how's everything going?", "good afternoon",
+                      "good afternoon , how's your day?"]
+        reply = random.choice(wish_reply)
+        Notification(
+            title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+            description=str(reply),
+            duration=30,  # Duration in seconds
+        ).send()
+    elif 16 <= hour < 19:
+        wish_reply = ["good evening , is everything going well?", "good evening",
+                      "good evening , how's your day?"]
+        reply = random.choice(wish_reply)
+        Notification(
+            title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+            description=str(reply),
+            duration=30,  # Duration in seconds
+        ).send()
+    else:
+        wish_reply = ["good evening , or should i say , good night?",
+                      "it's been a long day , i think you should rest now .", "so , how was the day?"]
+        reply = random.choice(wish_reply)
+        Notification(
+            title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
+            description=str(reply),
+            duration=30,  # Duration in seconds
+        ).send()
+
+
+def face_id_sample_generator():
+    import cv2
+    # noinspection PyUnresolvedReferences
+    cam = cv2.VideoCapture(0,
+                           cv2.CAP_DSHOW)  # create a video capture object which is helpful to capture videos through webcam
+    cam.set(3, 640)  # set video FrameWidth
+    cam.set(4, 480)  # set video FrameHeight
+    # noinspection PyUnresolvedReferences
+    detector = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    # Haar Cascade classifier is an effective object detection approach
+
+    speak("please say a numerical i d for the face i d.")
+    face_id = take_audio().lower()
+    face_id = ''.join([n for n in face_id if n.isdigit()])
+    print(f"ok. this is what i heard, {face_id}. This id is going to be the unique id for this face.")
+    speak(f"ok. this is what i heard, {face_id}. This id is going to be the unique i d for this face.")
+    # speak("please enter an numerical id for the face id. they can be 0 1 2 3 etcetra")
+    # face_id = input("Enter a Numeric user ID  here:  ")
+    # Use integer ID for every new face (0,1,2,3,4,5,6,7,8,9........)
+
+    print("Taking samples, please look at the camera ....... ")
+    speak("Taking samples, please look at the camera . ")
+    count = 0  # Initializing sampling face count
+
+    while True:
+
+        ret, img = cam.read()  # read the frames using the above created object
+        # noinspection PyUnresolvedReferences
+        converted_image = cv2.cvtColor(img,
+                                       cv2.COLOR_BGR2GRAY)  # The function converts an input image from one color space to another
+        faces = detector.detectMultiScale(converted_image, 1.3, 5)
+
+        for (x, y, w, h) in faces:
+            # noinspection PyUnresolvedReferences
+            cv2.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)  # used to draw a rectangle on any image
+            count += 1
+            # noinspection PyUnresolvedReferences
+            cv2.imwrite("samples/face." + str(face_id) + '.' + str(count) + ".jpg", converted_image[y:y + h, x:x + w])
+            # To capture & Save images into the datasets folder
+            # noinspection PyUnresolvedReferences
+            cv2.imshow('image', img)  # Used to display an image in a window
+        # noinspection PyUnresolvedReferences
+        k = cv2.waitKey(100) & 0xff  # Waits for a pressed key
+        if k == 27:  # Press 'ESC' to stop
+            break
+        elif count >= 10:  # Take 50 sample (More sample --> More accuracy)
+            break
+
+    print("Samples taken now closing the program....")
+    speak("Samples taken. now closing the program.")
+    cam.release()
+    # noinspection PyUnresolvedReferences
+    cv2.destroyAllWindows()
+
+
+def face_id_model_trainer():
+    import cv2
+    import numpy as np
+    from PIL import Image  # pillow package
+    import os
+
+    path = 'samples'  # Path for samples already taken
+    # noinspection PyUnresolvedReferences
+    recognizer = cv2.face.LBPHFaceRecognizer_create()  # Local Binary Patterns Histograms
+    # noinspection PyUnresolvedReferences
+    detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
+
+    # Haar Cascade classifier is an effective object detection approach
+
+    # noinspection PyShadowingNames,PyShadowingBuiltins
+    def Images_And_Labels(path):  # function to fetch the images and labels
+
+        imagePaths = [os.path.join(path, f) for f in os.listdir(path)]
+        faceSamples = []
+        ids = []
+
+        for imagePath in imagePaths:  # to iterate particular image path
+
+            gray_img = Image.open(imagePath).convert('L')  # convert it to grayscale
+            img_arr = np.array(gray_img, 'uint8')  # creating an array
+
+            id = int(os.path.split(imagePath)[-1].split(".")[1])
+            faces = detector.detectMultiScale(img_arr)
+
+            for (x, y, w, h) in faces:
+                faceSamples.append(img_arr[y:y + h, x:x + w])
+                ids.append(id)
+
+        return faceSamples, ids
+
+    print("Training the recently added face i d. please wait .It'll take a few seconds.")
+    speak("Training the recently added face i d. please wait .It'll take a few seconds. ")
+
+    faces, ids = Images_And_Labels(path)
+    recognizer.train(faces, np.array(ids))
+
+    recognizer.write('trainer/trainer.yml')  # Save the trained model as trainer.yml
+
+    print("Model trained successfully, The recently added face is now recognizable.")
+    speak("Model trained successfully, The recently added face is now recognizable.")
+
+
+# noinspection PyShadowingBuiltins,PyShadowingNames
+def face_id_face_recognition():
+    import cv2
+
+    greet_phrases = ["hello", "hi there", "how are you?", "oh, hello"]
+    greet = random.choice(greet_phrases)
+    # noinspection PyUnresolvedReferences
+    recognizer = cv2.face.LBPHFaceRecognizer_create()  # Local Binary Patterns Histograms
+    recognizer.read('trainer/trainer.yml')  # load trained model
+    cascadePath = "haarcascade_frontalface_default.xml"
+    # noinspection PyUnresolvedReferences
+    faceCascade = cv2.CascadeClassifier(cascadePath)  # initializing haar cascade for object detection approach
+    # noinspection PyUnresolvedReferences
+    font = cv2.FONT_HERSHEY_SIMPLEX  # denotes the font type
+
+    id = 5  # number of persons you want to Recognize
+
+    with open('C:/FRIDAY/face_id/face_id_1.txt') as f:
+        for line in f:
+            name_1 = line
+            # print(f"face identified as {line}")
+            # speak(f"face identified as {line}")
+            break
+
+    with open('C:/FRIDAY/face_id/face_id_2.txt') as f:
+        for line in f:
+            name_2 = line
+            # print(f"face identified as {line}")
+            # speak(f"face identified as {line}")
+            break
+
+    with open('C:/FRIDAY/face_id/face_id_3.txt') as f:
+        for line in f:
+            name_3 = line
+            # print(f"face identified as {line}")
+            # speak(f"face identified as {line}")
+            break
+
+    with open('C:/FRIDAY/face_id/face_id_4.txt') as f:
+        for line in f:
+            name_4 = line
+            # print(f"face identified as {line}")
+            # speak(f"face identified as {line}")
+            break
+
+    with open('C:/FRIDAY/face_id/face_id_5.txt') as f:
+        for line in f:
+            name_5 = line
+            # print(f"face identified as {line}")
+            # speak(f"face identified as {line}")
+            break
+    names = ["", f'{name_1}', f'{name_2}', f'{name_3}', f'{name_4}', f'{name_5}']  # names, leave first empty bcz counter starts from 0
+    # noinspection PyUnresolvedReferences
+    cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # cv2.CAP_DSHOW to remove warning
+    cam.set(3, 640)  # set video FrameWidht
+    cam.set(4, 480)  # set video FrameHeight
+
+    # Define min window size to be recognized as a face
+    minW = 0.1 * cam.get(3)
+    minH = 0.1 * cam.get(4)
+
+    # flag = True
+
+    while True:
+
+        ret, img = cam.read()  # read the frames using the above created object
+        # noinspection PyUnresolvedReferences
+        converted_image = cv2.cvtColor(img,
+                                       cv2.COLOR_BGR2GRAY)  # The function converts an input image from one color space to another
+
+        faces = faceCascade.detectMultiScale(
+            converted_image,
+            scaleFactor=1.2,
+            minNeighbors=5,
+            minSize=(int(minW), int(minH)),
+        )
+
+        for (x, y, w, h) in faces:
+            # noinspection PyUnresolvedReferences
+            cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)  # used to draw a rectangle on any image
+
+            id, accuracy = recognizer.predict(converted_image[y:y + h, x:x + w])  # to predict on every single image
+
+            # Check if accuracy is less them 100 ==> "0" is perfect match
+            # noinspection PyRedundantParentheses
+            if (accuracy < 100):
+                id = names[id]
+                accuracy = "  {0}%".format(round(100 - accuracy))
+
+            else:
+                id = "unknown"
+                accuracy = "  {0}%".format(round(100 - accuracy))
+            # noinspection PyUnresolvedReferences
+            cv2.putText(img, str(id), (x + 5, y - 5), font, 1, (255, 255, 255), 2)
+            # noinspection PyUnresolvedReferences
+            cv2.putText(img, str(accuracy), (x + 5, y + h - 5), font, 1, (255, 255, 0), 1)
+        # noinspection PyUnresolvedReferences
+        cv2.imshow('camera', img)
+        # noinspection PyUnresolvedReferences
+        k = cv2.waitKey(10) & 0xff  # Press 'ESC' for exiting video
+        if k == 27:
+            break
+
+    # Do a bit of cleanup
+    if id == name_1:
+        print(f"face identified as {name_1}")
+        speak(f"face identified as {name_1}")
+        print(f"{greet} {name_1}. {wish_face_id()}")
+        speak(f"{greet} {name_1}. {wish_face_id()}")
+    elif id == name_2:
+        print(f"face identified as {name_2}")
+        speak(f"face identified as {name_2}")
+        print(f"{greet} {name_2}. {wish_face_id()}")
+        speak(f"{greet} {name_2}. {wish_face_id()}")
+    elif id == name_3:
+        print(f"face identified as {name_3}")
+        speak(f"face identified as {name_3}")
+        print(f"{greet} {name_3}. {wish_face_id()}")
+        speak(f"{greet} {name_3}. {wish_face_id()}")
+    elif id == name_4:
+        print(f"face identified as {name_4}")
+        speak(f"face identified as {name_4}")
+        print(f"{greet} {name_4}. {wish_face_id()}")
+        speak(f"{greet} {name_4}. {wish_face_id()}")
+    elif id == name_5:
+        print(f"face identified as {name_5}")
+        speak(f"face identified as {name_5}")
+        print(f"{greet} {name_5}. {wish_face_id()}")
+        speak(f"{greet} {name_5}. {wish_face_id()}")
+    elif id == "unknown":
+        print(f"an unknown face was detected. if it needs to be added, please say 'add new face' along with {WAKE_WORD}.")
+        speak(f"an unknown face was detected. if it needs to be added, please say 'add new face' along with {WAKE_WORD}.")
+        print(f"unknown face was detected. Facial is data is saved in case of any malicious activity and for security reasons.{wish()}")
+        speak(f"unknown face was detected. Facial is data is saved in case of any malicious activity and for security reasons.{wish()}")
+    else:
+        pass
+
+    print("Facial Recognition data updated.")
+    # speak("Thanks for using the program, have a good day.")
+    cam.release()
+    # noinspection PyUnresolvedReferences
+    cv2.destroyAllWindows()
 
 
 def get_riddle():
@@ -219,7 +544,7 @@ def wish():
     hour = int(datetime.datetime.now().hour)
 
     if 5 <= hour <= 12:
-        wish_reply = ["good morning , how's the day going?", "hello sir, good morning", "good morning , how's your day?"]
+        wish_reply = ["good morning , how's the day going?", "hello , good morning", "good morning , how's your day?"]
         reply = random.choice(wish_reply)
         Notification(
             title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
@@ -228,7 +553,7 @@ def wish():
         ).send()
         speak(reply)
     elif 12 <= hour < 16:
-        wish_reply = ["good afternoon , how's everything going?", "hello sir, good afternoon", "good afternoon , how's your day?"]
+        wish_reply = ["good afternoon , how's everything going?", "hello , good afternoon", "good afternoon , how's your day?"]
         reply = random.choice(wish_reply)
         Notification(
             title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
@@ -237,7 +562,7 @@ def wish():
         ).send()
         speak(reply)
     elif 16 <= hour < 19:
-        wish_reply = ["good evening , is everything going well?", "hello sir, good evening", "good evening , how's your day?"]
+        wish_reply = ["good evening , is everything going well?", "hello , good evening", "good evening , how's your day?"]
         reply = random.choice(wish_reply)
         Notification(
             title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
@@ -246,7 +571,7 @@ def wish():
         ).send()
         speak(reply)
     else:
-        wish_reply = ["good evening , or should i say , good night?", "hello sir, it's been a long day , i think you should rest now .", "so , how was the day?"]
+        wish_reply = ["good evening , or should i say , good night?", "hello , it's been a long day , i think you should rest now .", "so , how was the day?"]
         reply = random.choice(wish_reply)
         Notification(
             title=f"{WAKE_WORD_CAPITAL} Desktop Assistant",
@@ -257,9 +582,11 @@ def wish():
     speak("all systems are now online")
 
 
+# noinspection PyShadowingNames
 class MainThread(QThread):
-
+    speak_print = ''
     # noinspection PyMethodParameters
+
     def speak(audio):
         tts = gTTS(text=str(audio), lang='en', tld='ca')
         filename = 'speech_engine.wav'
@@ -280,40 +607,25 @@ class MainThread(QThread):
         response_reply = random.choice(response)
         print(response_reply)
         speak(response_reply)
+        global speak_print
+        speak_print = f"ALL SYSTEMS ARE NOW ONLINE."
         check_internet_status()
         print(f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue.")
         speak(f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue.")
         while True:
             # noinspection PyAttributeOutsideInit
-            self.text = self.take_audio()
+            self.text = take_audio()
             if"wake up" in self.text or WAKE_WORD in self.text or "are you there" in self.text or "ഫ്രൈഡേ" in self.text or "ഹലോ" in self.text:
                 AudioPlayer("C:/FRIDAY/audio/activation_sound.mp3").play(block=True)
                 self.taskexecution()
 
     # noinspection PyMethodMayBeStatic
-    def take_audio(self):
-        r = sr.Recognizer()
-        with sr.Microphone() as source:
-            r.pause_threshold = 1
-            r.adjust_for_ambient_noise(source)
-            r.dynamic_energy_threshold = 1000
-            print("listening...")
-            audio = r.listen(source, phrase_time_limit=20)
-        try:
-            print("Recognizing...")
-            text = r.recognize_google(audio, language='en-IN')
-            print(f"user said: {text}")
-
-        except Exception as e:
-            print(str(e))
-            # speak("can you please repeat the command ?")
-            return "none"
-        text = text.lower()
-        return text
 
     def taskexecution(self):
-        activation()
-        wish()
+        # activation()
+        # wish()
+        # face_id_face_recognition()
+        # GUI_weather_info()
         while True:
             from datetime import datetime
             os.system('color')
@@ -341,7 +653,7 @@ class MainThread(QThread):
                 ).send()
                 speak_2("there is no stable internet connection available. please connect to a network")
             import random
-            self.text = self.take_audio().lower()
+            self.text = take_audio().lower()
             from audioplayer import AudioPlayer
             if WAKE_WORD in self.text:
                 import datetime
@@ -368,7 +680,7 @@ class MainThread(QThread):
                         reply = random.choice(possible_reply)
                         print(reply)
                         speak(reply)
-                        file_name = self.take_audio()
+                        file_name = take_audio()
                         file_name = file_name + "-note.txt"
                         with open(file_name, "w") as n:
                             n.write(text)
@@ -384,7 +696,7 @@ class MainThread(QThread):
                     reply = random.choice(possible_reply)
                     print(reply)
                     speak(reply)
-                    note_text = self.take_audio()
+                    note_text = take_audio()
                     note(note_text)
                     possible_reply = ["I've made a note of that.",
                                       "that's written and saved.",
@@ -398,6 +710,177 @@ class MainThread(QThread):
                     os.system('TASKKILL /F /IM notepad.exe')
                     print("you can find the saved note file in the program directory.")
                     speak("you can find the saved note file in the program directory.")
+                elif "add new face" in self.text or "ad new face" in self.text:
+                    AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    try:
+                        face_id_sample_generator()
+                        print("new face i d was successfully added.")
+                        speak("new face i d was successfully added.")
+                        print("now the newly added face id has to be trained, for that please look at the camera once more.")
+                        speak("now the newly added face id has to be trained, for that please look at the camera once more.")
+                        face_id_model_trainer()
+                        print("face id model training was successfull")
+                    except Exception as e:
+                        print(str(e))
+                elif "add name" in self.text or "ad name" in self.text:
+                    AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    # noinspection PyUnusedLocal
+                    with open('C:/FRIDAY/face_id/face_id_1.txt') as f:
+                        print("to which face i d do you wanna add name?.specify the number.")
+                        speak("to which face i d do you wanna add name?.specify the number.")
+                        speak("please say a numerical number corresponding to the face i d.")
+                        condition = take_audio().lower()
+                        condition = ''.join([n for n in condition if n.isdigit()])
+                        if "1" in condition or "one" in condition or " 1" in condition:
+                            AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                            fd = open("C:/FRIDAY/face_id/face_id_1.txt", "w")
+                            print("sure.")
+                            speak("sure.")
+                            print("what should be the name for the face i d.")
+                            speak("what should be the name for the face i d.")
+                            name_1 = take_audio().lower()
+                            name_1 = name_1.replace("call me", "")
+                            name_1 = name_1.replace("you can", "")
+                            name_1 = name_1.replace("should", "")
+                            name_1 = name_1.replace("would", "")
+                            name_1 = name_1.replace("i think", "")
+                            name_1 = name_1.replace("my name is", "")
+                            name_1 = name_1.replace("that", "")
+                            name_1 = name_1.replace("my name's", "")
+                            name_1 = name_1.replace("probably", "")
+                            name_1 = name_1.replace("you", "")
+                            name_1 = name_1.replace("will have to", "")
+                            name_1 = name_1.replace("most probably", "")
+                            fd.write(name_1)
+                            possible_reply = [f"ok. face recognition i d updated. i d will be known as {name_1}.",
+                                              f"sure. i'll identify you as {name_1} from now.",
+                                              f"yeah sure, i'll identify this face as {name_1} now onwards.",
+                                              f"ok, sure. i'll store your face i d as {name_1} in my database."]
+                            reply = random.choice(possible_reply)
+                            print(reply)
+                            speak(reply)
+                            break
+                        elif "2" in condition or " 2" in condition or "two" in condition or "tu" in condition or "tube" in condition:
+                            AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                            fd = open("C:/FRIDAY/face_id/face_id_2.txt", "w")
+                            print("sure.")
+                            speak("sure.")
+                            print("what should be the name for the face i d.")
+                            speak("what should be the name for the face i d.")
+                            name_2 = take_audio().lower()
+                            name_2 = name_2.replace("call me", "")
+                            name_2 = name_2.replace("you can", "")
+                            name_2 = name_2.replace("should", "")
+                            name_2 = name_2.replace("would", "")
+                            name_2 = name_2.replace("i think", "")
+                            name_2 = name_2.replace("my name is", "")
+                            name_2 = name_2.replace("that", "")
+                            name_2 = name_2.replace("my name's", "")
+                            name_2 = name_2.replace("probably", "")
+                            name_2 = name_2.replace("you", "")
+                            name_2 = name_2.replace("will have to", "")
+                            name_2 = name_2.replace("most probably", "")
+                            fd.write(name_2)
+                            possible_reply = [f"ok. face recognition i d updated. i d will be know as {name_2}.",
+                                              f"sure. i'll identify you as {name_2} from now.",
+                                              f"yeah sure, i'll identify this face as {name_2} now onwards.",
+                                              f"ok, sure. i'll store your face i d as {name_2} in my database."]
+                            reply = random.choice(possible_reply)
+                            print(reply)
+                            speak(reply)
+                            break
+                        elif "3" in condition or " 3" in condition or "three" in condition or "tree" in condition or "dhree" in condition:
+                            AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                            fd = open("C:/FRIDAY/face_id/face_id_3.txt", "w")
+                            print("sure.")
+                            speak("sure.")
+                            print("what should be the name for the face i d.")
+                            speak("what should be the name for the face i d.")
+                            name_3 = take_audio().lower()
+                            name_3 = name_3.replace("call me", "")
+                            name_3 = name_3.replace("you can", "")
+                            name_3 = name_3.replace("should", "")
+                            name_3 = name_3.replace("would", "")
+                            name_3 = name_3.replace("i think", "")
+                            name_3 = name_3.replace("my name is", "")
+                            name_3 = name_3.replace("that", "")
+                            name_3 = name_3.replace("my name's", "")
+                            name_3 = name_3.replace("probably", "")
+                            name_3 = name_3.replace("you", "")
+                            name_3 = name_3.replace("will have to", "")
+                            name_3 = name_3.replace("most probably", "")
+                            fd.write(name_3)
+                            possible_reply = [f"ok. face recognition i d updated. i d will be know as {name_3}.",
+                                              f"sure. i'll identify you as {name_3} from now.",
+                                              f"yeah sure, i'll identify this face as {name_3} now onwards.",
+                                              f"ok, sure. i'll store your face i d as {name_3} in my database."]
+                            reply = random.choice(possible_reply)
+                            print(reply)
+                            speak(reply)
+                            break
+                        elif "4" in condition or "four" in condition or "for" in condition or " 4" in condition or "phour" in condition:
+                            AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                            fd = open("C:/FRIDAY/face_id/face_id_4.txt", "w")
+                            print("sure.")
+                            speak("sure.")
+                            print("what should be the name for the face i d.")
+                            speak("what should be the name for the face i d.")
+                            name_4 = take_audio().lower()
+                            name_4 = name_4.replace("call me", "")
+                            name_4 = name_4.replace("you can", "")
+                            name_4 = name_4.replace("should", "")
+                            name_4 = name_4.replace("would", "")
+                            name_4 = name_4.replace("i think", "")
+                            name_4 = name_4.replace("my name is", "")
+                            name_4 = name_4.replace("that", "")
+                            name_4 = name_4.replace("my name's", "")
+                            name_4 = name_4.replace("probably", "")
+                            name_4 = name_4.replace("you", "")
+                            name_4 = name_4.replace("will have to", "")
+                            name_4 = name_4.replace("most probably", "")
+                            fd.write(name_4)
+                            possible_reply = [f"ok. face recognition i d updated. i d will be know as {name_4}.",
+                                              f"sure. i'll identify you as {name_4} from now.",
+                                              f"yeah sure, i'll identify this face as {name_4} now onwards.",
+                                              f"ok, sure. i'll store your face i d as {name_4} in my database."]
+                            reply = random.choice(possible_reply)
+                            print(reply)
+                            speak(reply)
+                            break
+                        elif "5" in condition or "five" in condition or " 5" in condition or "phyve" in condition or "phive" in condition:
+                            AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                            fd = open("C:/FRIDAY/face_id/face_id_5.txt", "w")
+                            print("sure.")
+                            speak("sure.")
+                            print("what should be the name for the face i d.")
+                            speak("what should be the name for the face i d.")
+                            name_5 = take_audio().lower()
+                            name_5 = name_5.replace("call me", "")
+                            name_5 = name_5.replace("you can", "")
+                            name_5 = name_5.replace("should", "")
+                            name_5 = name_5.replace("would", "")
+                            name_5 = name_5.replace("i think", "")
+                            name_5 = name_5.replace("my name is", "")
+                            name_5 = name_5.replace("that", "")
+                            name_5 = name_5.replace("my name's", "")
+                            name_5 = name_5.replace("probably", "")
+                            name_5 = name_5.replace("you", "")
+                            name_5 = name_5.replace("will have to", "")
+                            name_5 = name_5.replace("most probably", "")
+                            fd.write(name_5)
+                            possible_reply = [f"ok. face recognition i d updated. i d will be know as {name_5}.",
+                                              f"sure. i'll identify you as {name_5} from now.",
+                                              f"yeah sure, i'll identify this face as {name_5} now onwards.",
+                                              f"ok, sure. i'll store your face i d as {name_5} in my database."]
+                            reply = random.choice(possible_reply)
+                            print(reply)
+                            speak(reply)
+                            break
+                        else:
+                            break
+                elif "recognise face" in self.text or "face id" in self.text or "facial recognition" in self.text:
+                    AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    face_id_face_recognition()
                 elif "riddle" in self.text:
                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     get_riddle()
@@ -413,6 +896,19 @@ class MainThread(QThread):
                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     print("oh. i feel sorry to hear that. and i also feel sorry because i wanted to be as dumb as you, but it seems that it's impossible to beat you in terms of dumbness")
                     speak("oh. i feel sorry to hear that. and i also feel sorry because i wanted to be as dumb as you, but it seems that it's impossible to beat you in terms of dumbness")
+                elif "laugh" in self.text:
+                    AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    songs_to_sing = ["C:/FRIDAY/audio/laughingsoundeffect1.mp3",
+                                     "C:/FRIDAY/audio/laughingsoundeffect2.mp3"]
+                    song = random.choice(songs_to_sing)
+                    sarcastic_reply = ["sure , just don't freak out.",
+                                       "ok. it's gonna be a little bit different"]
+                    reply = random.choice(sarcastic_reply)
+                    print(reply)
+                    speak(reply)
+                    AudioPlayer(song).play(block=True)
+                    print("how about another one?")
+                    speak("how about another one?")
                 elif "good morning" in self.text:
                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     import datetime
@@ -562,7 +1058,7 @@ class MainThread(QThread):
                         reply = random.choice(possible_reply)
                         print(reply)
                         speak(reply)
-                        condition = self.take_audio().lower()
+                        condition = take_audio().lower()
                         for phrase in DENIAL_WORDS:
                             if phrase in condition:
                                 AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -571,7 +1067,7 @@ class MainThread(QThread):
                                 speak("oh, i'm sorry.")
                                 print("what should i call you then?.")
                                 speak("what should i call you then?.")
-                                name = self.take_audio().lower()
+                                name = take_audio().lower()
                                 name = name.replace("call me", "")
                                 name = name.replace("you can", "")
                                 name = name.replace("should", "")
@@ -597,6 +1093,7 @@ class MainThread(QThread):
                                 break
                         for phrase in APPROVAL_WORDS:
                             if phrase in condition:
+                                AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                                 print(f"ok. i hope the name '{line}' is the correct one to go.")
                                 speak(f"ok. i hope the name '{line}' is the correct one to go.")
                                 break
@@ -657,12 +1154,12 @@ class MainThread(QThread):
                     try:
                         print(reply_)
                         speak(reply_)
-                        said_from = self.take_audio().lower()
+                        said_from = take_audio().lower()
                         print("ok")
                         speak(reply_2)
                         print("only say the language name, if anything else is included ,it will cause error in translation. and try to say it only once.")
                         speak("only say the language name, if anything else is included ,it will cause error in translation. and try to say it only once.")
-                        name_of_language = self.take_audio().lower()
+                        name_of_language = take_audio().lower()
                         language = language_list[name_of_language]
                         translated = ts.google(said_from, from_language='en', to_language=language)
 
@@ -678,7 +1175,7 @@ class MainThread(QThread):
                         speak(language_list_speech)
                         print("what would you like to translate?.")
                         speak("what would you like to translate?.")
-                        said_from = self.take_audio().lower()
+                        said_from = take_audio().lower()
                         print("understood")
 
                         try:
@@ -686,7 +1183,7 @@ class MainThread(QThread):
                             speak(reply_2)
                             print("only say the language name, if anything else is included ,it will cause error in translation. and only say it once.")
                             speak("only say the language name, if anything else is included ,it will cause error in translation. and only say it once.")
-                            name_of_language = self.take_audio().lower()
+                            name_of_language = take_audio().lower()
                             language = language_list[name_of_language]
                             translated = ts.google(said_from, from_language='en', to_language=language)
 
@@ -770,7 +1267,7 @@ class MainThread(QThread):
                     speak(ft)
                     print("do you want more random facts?.")
                     speak("do you want more random facts?. ")
-                    condition = self.take_audio().lower()
+                    condition = take_audio().lower()
                     for phrase in APPROVAL_WORDS:
                         if phrase in condition:
                             AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -790,6 +1287,7 @@ class MainThread(QThread):
                         else:
                             pass
                     for phrase in DENIAL_WORDS:
+                        AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                         if phrase in condition:
                             sarcastic_reply = ["ok , nevermind.",
                                                "sure , i'll cancel.",
@@ -1048,13 +1546,13 @@ class MainThread(QThread):
                     print(reply)
                     speak(reply)
                     speak("do you want to know the full value of pi?.")
-                    condition = self.take_audio().lower()
+                    condition = take_audio().lower()
                     for phrase in APPROVAL_WORDS:
                         if phrase in condition:
                             AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                             print("are you sure, because once i start you'll have to wait until it gets finished , if you want to go ahead say , yes , otherwise say , no.")
                             speak("are you sure, because once i start you'll have to wait until it gets finished , if you want to go ahead say , yes , otherwise say , no.")
-                            condition_new = self.take_audio().lower()
+                            condition_new = take_audio().lower()
                             for phrase_1 in APPROVAL_WORDS:
                                 if phrase_1 in condition_new:
                                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -1165,97 +1663,6 @@ class MainThread(QThread):
                     # pyautogui.keyDown('l')
                     # pyautogui.keyUp('win')
                     # pyautogui.keyUp('l')
-                elif "find directions" in self.text or "find route" in self.text or "google maps" in self.text or "google map" in self.text:
-                    AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                    try:
-                        from selenium import webdriver
-                        from time import sleep
-                        import random
-                        from audioplayer import AudioPlayer
-                        possible_reply = ["sure , what's your destination?.",
-                                          "ok. where do you want to go?.",
-                                          "sure, tell me the destination."]
-                        reply = random.choice(possible_reply)
-                        print(reply)
-                        speak(reply)
-                        destination = self.take_audio().lower()
-                        AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
-                        possible_reply_2 = ["what's your starting point?.",
-                                            "from where do you want to start?.",
-                                            "tell me the starting point."]
-                        reply = random.choice(possible_reply_2)
-                        print(reply)
-                        speak(reply)
-                        starting_point = self.take_audio().lower()
-                        AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
-
-                        driver = webdriver.Chrome("C:/Program Files (x86)/chromedriver.exe")
-                        driver.get("https://www.google.com/maps")
-                        sleep(5)
-
-                        def searchplace():
-                            Place = driver.find_element_by_class_name("tactile-searchbox-input")
-                            Place.send_keys(f"{destination}")
-                            Submit = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[3]/div[1]/div[1]/div[1]/div[2]/div[1]/button")
-                            Submit.click()
-                        searchplace()
-
-                        def directions():
-                            sleep(5)
-                            # noinspection PyShadowingNames
-                            directions = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[8]/div/div[1]/div/div/div[4]/div[1]/div/button")
-                            directions.click()
-                        directions()
-
-                        def find():
-                            sleep(6)
-                            # noinspection PyShadowingNames
-                            find = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[3]/div[1]/div[2]/div/div[3]/div[1]/div[1]/div[2]/div/div/input")
-                            find.send_keys(f"{starting_point}")
-                            sleep(4)
-                            # noinspection PyShadowingNames
-                            search = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[3]/div[1]/div[2]/div/div[3]/div[1]/div[1]/div[2]/button[1]")
-                            search.click()
-                        find()
-
-                        def kilometers():
-                            sleep(5)
-                            # noinspection PyShadowingNames
-                            try:
-                                Totalkilometers = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[8]/div/div[1]/div/div/div[5]/div[1]/div/div[1]/div[1]/div[2]/div")
-                                print(f"Total Kilometers: {Totalkilometers.text}")
-                                speak(f"Total Kilometers to travel will be {Totalkilometers.text}")
-                                sleep(5)
-                            except Exception as e:
-                                print(str(e))
-                                pass
-                            # noinspection PyShadowingNames
-                            try:
-                                Bus = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[8]/div/div[1]/div/div/div[5]/div[1]/div/div[1]/div[1]/div[1]/span[1]")
-                                print(f"Approximate Time Of Journey: {Bus.text}")
-                                # travelling_via = driver.find_element_by_xpath("/html/body/div[3]/div[9]/div[8]/div/div[1]/div/div/div[5]/div[1]/div/div[1]/div[2]/h1[1]/span")
-                                speak(f"approximate time of journey will be {Bus.text}")
-                                sleep(7)
-                            except Exception as e:
-                                print(str(e))
-                                pass
-                            # noinspection PyShadowingNames
-                            try:
-                                Train = driver.find_element_by_xpath("/html/body/jsl/div[3]/div[10]/div[8]/div/div[1]/div/div/div[5]/div[3]/div/div[2]/div[1]/div")
-                                print(f"Train Travel: {Train.text}")
-                                speak(f"approximate time if you are taking a train will be {Train.text}")
-                                sleep(7)
-                            except Exception as e:
-                                print(str(e))
-                                pass
-                        kilometers()
-                    except Exception as e:
-                        print(str(e))
-                        from time import sleep
-                        print("sorry i was unable to do some of that")
-                        speak("sorry i was unable to do some of that")
-                        sleep(3)
-                        os.system('TASKKILL /F /IM chrome.exe')
                 elif "make fart" in self.text or "you fart" in self.text or "വളി വിടുമോ" in self.text or "you for" in self.text or "make for sound" in self.text or "വളി വിട്" in self.text:
                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     print("as you wish !! . T-minus 3 seconds . 3 2 1")
@@ -1274,13 +1681,13 @@ class MainThread(QThread):
                     print(reply)
                     speak(reply)
                     print("waiting...")
-                    condition = self.take_audio().lower()
+                    condition = take_audio().lower()
                     for phrase in APPROVAL_WORDS:
                         if phrase in condition:
                             AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                             print("oh boy hold your nose . are you sure that you want this ? . it'll be like thirty seconds long and once i start , there's no stopping it . do you want to continue ?.")
                             speak("oh boy hold your nose . are you sure that you want this ? . it'll be like thirty seconds long and once i start , there's no stopping it . do you want to continue ?.")
-                            condition_new = self.take_audio().lower()
+                            condition_new = take_audio().lower()
                             for phrase_2 in APPROVAL_WORDS:
                                 if phrase_2 in condition_new:
                                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -1294,6 +1701,7 @@ class MainThread(QThread):
                                     pass
                             for phrase_2 in DENIAL_WORDS:
                                 if phrase_2 in condition_new:
+                                    AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                                     print("ok. cancelling.")
                                     speak("ok. cancelling.")
                                     break
@@ -1337,7 +1745,7 @@ class MainThread(QThread):
                     AudioPlayer(song).play(block=True)
                     print("how about another one?")
                     speak("how about another one?")
-                    condition = self.take_audio().lower()
+                    condition = take_audio().lower()
                     for phrase in APPROVAL_WORDS:
                         if phrase in condition:
                             AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -1461,7 +1869,7 @@ class MainThread(QThread):
                     self.text = self.text.replace("wikipedia", "")
                     print("what do you wanna search on wikipedia ?.")
                     speak("what do you wanna search on wikipedia ?.")
-                    cm = self.take_audio().lower()
+                    cm = take_audio().lower()
                     print(f"fetching info about {cm}")
                     speak(f"fetching info about {cm}")
                     info = wikipedia.summary(cm, 2)
@@ -1503,7 +1911,7 @@ class MainThread(QThread):
                     self.text = self.text.replace("play", "")
                     speak("what do you want me to play on youtube ?.")
                     print("what do you want me to play on youtube ?.")
-                    cm = self.take_audio().lower()
+                    cm = take_audio().lower()
                     speak("ok")
                     pywhatkit.playonyt(cm)
                 elif "play" in self.text:
@@ -1864,18 +2272,18 @@ class MainThread(QThread):
                         print("please specify the phone number of the person that you want to send the message to in the command prompt.")
                         speak("please specify the phone number of the person that you want to send the message to in the command prompt.")
                         # ph_number = input("Enter the contact in the cmd prompt: ")
-                        ph_number = self.take_audio().lower()
+                        ph_number = take_audio().lower()
                         print("now say the message that you want to send to the said person.")
                         speak("now say the message that you want to send to the said person.")
-                        message = self.take_audio().lower()
+                        message = take_audio().lower()
                         print("great , now please say the hour to send the message in 24 hour format.")
                         speak("great , now please say the hour to send the message in 24 hour format.")
                         # time_of_sending_hour = input("Enter the hour to send the message in 24 hour format :")
                         # time_of_sending_minute = input("Enter the minute to send the message:")
-                        time_of_sending_hour = self.take_audio().lower()
+                        time_of_sending_hour = take_audio().lower()
                         print("great , now please say the minute to send the message.")
                         speak("great , now please say the minute to send the message.")
-                        time_of_sending_minute = self.take_audio().lower()
+                        time_of_sending_minute = take_audio().lower()
                         pywhatkit.sendwhatmsg("+91" + ph_number, message, int(time_of_sending_hour), int(time_of_sending_minute))
                         pass
 
@@ -1954,7 +2362,7 @@ class MainThread(QThread):
                         speak(f"got it , here is the profile of the user {name} on instagram.")
                         print("sir , do you wanna download the profile picture of this account ?.")
                         speak("sir , do you wanna download the profile picture of this account ?.")
-                        condition = self.take_audio().lower()
+                        condition = take_audio().lower()
                         for phrase in APPROVAL_WORDS:
                             if phrase in condition:
                                 AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -1985,7 +2393,7 @@ class MainThread(QThread):
                     print("ok , please tell me the name for this screenshot file")
                     speak("ok , please tell me the name for this screenshot file.")
                     print("waiting...")
-                    name = self.take_audio().lower()
+                    name = take_audio().lower()
                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     print("please hold the screen for few seconds , i'm taking the screenshot.")
                     speak("please hold the screen for few seconds , i'm taking the screenshot.")
@@ -2001,7 +2409,7 @@ class MainThread(QThread):
                     # self.text = self.text.replace(WAKE_WORD, "")
                     # speak("sure , what should i search on google ?.")
                     # print("sure , what should i search on google ?.")
-                    # cm = self.take_audio().lower()
+                    # cm = take_audio().lower()
                     # webbrowser.open(f"https://www.google.com/search?client=opera-gx&q=" + cm)
                     # pass
                 elif "open google" in self.text:
@@ -2156,7 +2564,9 @@ class MainThread(QThread):
                         # speak("or you can say 'take picture' or 'take a photo' to take picture.")
                         # print("press escape or say 'close' to exit the camera app.")
                         # print("press space or say 'take picture' or 'take a photo' to take picture.")
+                        # noinspection PyUnresolvedReferences
                         cam = cv2.VideoCapture(0)
+                        # noinspection PyUnresolvedReferences
                         cv2.namedWindow("Webcam.FRIDAY")
                         img_counter = 0
                         while True:
@@ -2164,7 +2574,9 @@ class MainThread(QThread):
                             if not ret:
                                 print("failed to grab frame.")
                                 break
+                            # noinspection PyUnresolvedReferences
                             cv2.imshow("test", frame)
+                            # noinspection PyUnresolvedReferences
                             k = cv2.waitKey(1)
                             if k % 256 == 27:
                                 # ESC pressed
@@ -2173,6 +2585,7 @@ class MainThread(QThread):
                             elif k % 256 == 32:
                                 # SPACE pressed
                                 img_name = "webcam_FRIDAY{}.png".format(img_counter)
+                                # noinspection PyUnresolvedReferences
                                 cv2.imwrite(img_name, frame)
                                 print("{} written!".format(img_name))
                                 img_counter += 1
@@ -2185,6 +2598,7 @@ class MainThread(QThread):
                             #    print("ok . closing.")
                             #    speak("ok . closing.")
                         cam.release()
+                        # noinspection PyUnresolvedReferences
                         cv2.destroyAllWindows()
                     except Exception as e:
                         print(str(e))
@@ -2276,7 +2690,7 @@ class MainThread(QThread):
                     try:
                         print("please confirm whether you want to hide the files in this folder or if you want to show the files in this folder")
                         speak("please confirm whether you want to hide the files in this folder or if you want to show the files in this folder")
-                        condition = self.take_audio().lower()
+                        condition = take_audio().lower()
                         if "hide" in condition:
                             AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                             os.system("attrib +h /s /d")
@@ -2301,7 +2715,7 @@ class MainThread(QThread):
                     while True:
                         print("tell me what you want to know")
                         speak("tell me what you want to know")
-                        how = self.take_audio()
+                        how = take_audio()
                         AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                         try:
                             if "deactivate" in how or "close" in how:
@@ -2374,7 +2788,7 @@ class MainThread(QThread):
                     # engine.setProperty('voice', voices[1].id)
                     # speak_2("you can change voice temporarily if you want")
                     # speak_2("do you want to change the voice ? , say YES  , or , NO")
-                    # condition = self.take_audio().lower()
+                    # condition = take_audio().lower()
                     # for phrase in APPROVAL_WORDS:
                         # if phrase in condition:
                         # AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -2384,7 +2798,7 @@ class MainThread(QThread):
                         # engine.setProperty('voice', voices[1].id)
                         # speak_2(f"for female voice 1 , which is default , say , {WAKE_WORD} or say , female 1")
                         # speak_2("now , to which voice do you wanna change to")
-                        # condition = self.take_audio().lower()
+                        # condition = take_audio().lower()
                         # if "male voice" in condition or "creepy" in condition:
                         # AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                         # engine.setProperty('voice', voices[0].id)
@@ -2417,6 +2831,7 @@ class MainThread(QThread):
                     reply = random.choice(list_of_reply)
                     print(reply)
                     speak(reply)
+                    os.system('TASKKILL /F /IM friday.exe')
                     sys.exit()
                 else:
                     from audioplayer import AudioPlayer
@@ -2438,12 +2853,12 @@ class MainThread(QThread):
                 self.text = self.text.replace(WAKE_WORD, "")
                 print("who's alexa? , tell me now ! who is alexa ?.")
                 speak("who's alexa? , tell me now !, who . is . alexa ?.")
-                condition = self.take_audio().lower()
+                condition = take_audio().lower()
                 if "sorry" in condition or "" in condition:
                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     print(f"oh god !, what's with you and alexa ? , my name's {WAKE_WORD} , so call me {WAKE_WORD} !, do not mention her name again , do you understand ?.")
                     speak(f"oh god !, what's with you and alexa ? , my name's {WAKE_WORD} , so call me {WAKE_WORD} !, do not mention her name again , do you understand ?.")
-                    condition_new = self.take_audio().lower()
+                    condition_new = take_audio().lower()
                     for phrase in APPROVAL_WORDS:
                         if phrase in condition_new:
                             AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -2479,12 +2894,12 @@ class MainThread(QThread):
                 self.text = self.text.replace(WAKE_WORD, "")
                 print("who's siri? , i'll only continue once i get an answer to this ! , you better tell me fast.")
                 speak("who's siri? , i'll only continue once i get an answer to this ! , you better tell me fast.")
-                condition = self.take_audio().lower()
+                condition = take_audio().lower()
                 if "sorry" in condition or "nevermind " in condition or "" in condition:
                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     print("don't say her name ever !, do you understand ?.")
                     speak("don't say her name ever !, do you understand ?.")
-                    condition_new = self.take_audio().lower()
+                    condition_new = take_audio().lower()
                     for phrase in APPROVAL_WORDS:
                         if phrase in condition_new:
                             AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
@@ -2552,10 +2967,14 @@ class Main(QMainWindow):
         self.ui.setupUi(self)
         self.ui.pushButton.clicked.connect(self.startTask)
         self.ui.pushButton_2.clicked.connect(self.close)
+        os.system('TASKKILL /F /IM friday.exe')
 
     def startTask(self):
-        self.ui.movie = QtGui.QMovie("C:/FRIDAY/IRONMAN-HUD-2K.gif")
+        self.ui.movie = QtGui.QMovie("C:/FRIDAY/files/icons/IRONMAN-HUD-2K.gif")
         self.ui.label.setMovie(self.ui.movie)
+        self.ui.movie.start()
+        self.ui.movie = QtGui.QMovie("C:/FRIDAY/files/icons/sound_wave.gif")
+        self.ui.label_4.setMovie(self.ui.movie)
         self.ui.movie.start()
         timer = QTimer(self)
         timer.timeout.connect(self.showTime)
@@ -2567,8 +2986,53 @@ class Main(QMainWindow):
         current_date = QDate.currentDate()
         label_time = current_time.toString('h:mm:ss ap')
         label_date = current_date.toString(Qt.ISODate)
-        self.ui.textBrowser.setText(label_date)
-        self.ui.textBrowser_2.setText(label_time)
+        self.ui.textBrowser.setText(label_time)
+        self.ui.textBrowser_2.setText(label_date)
+        self.ui.textBrowser_5.setText(speak_print)
+        self.ui.textBrowser_6.setText("YOU SAID :")
+        self.ui.textBrowser_7.setText(text)
+        # self.ui.label_3.update(self.GUI_weather_info())
+
+    # noinspection PyMethodMayBeStatic
+    def GUI_weather_info(self):
+        url = "https://weather.com/en-IN/weather/today/l/4aff3ae553b47caf710d085a58fe60acac12d05abc56e4e18eca484e55ceede6"
+
+        master = Tk()
+        master.title("Weather Info")
+        master.anchor("center")
+        master.config(bg="maroon")
+        master.geometry("3340x400")
+        # master.attributes('-alpha', 0.5)
+        master.wm_attributes('-transparentcolor', master['bg'])
+        master.overrideredirect(True)
+
+        img = Image.open("C:/FRIDAY/files/icons/weather_icon_4.png")
+        img = img.resize((150, 150))
+        img = ImageTk.PhotoImage(img)
+
+        def getWeather():
+            page = requests.get(url)
+            soup = BeautifulSoup(page.content, "html.parser")
+            location = soup.find('h1', class_="CurrentConditions--location--kyTeL").text
+            temperature = soup.find('span', class_="CurrentConditions--tempValue--3a50n").text
+            weatherPrediction = soup.find('div', class_="CurrentConditions--phraseValue--2Z18W").text
+
+            locationLabel.config(text=location)
+            temperatureLabel.config(text=temperature)
+            weatherPredictionLabel.config(text=weatherPrediction)
+
+            temperatureLabel.after(60000, getWeather)
+            master.update()
+
+        locationLabel = Label(master, font=("LEIXO DEMO", 20), bg="maroon", foreground="red")
+        locationLabel.grid(row=0, sticky="N", padx=10)
+        temperatureLabel = Label(master, font=("Calibri Bold", 70), bg="maroon", foreground="dimgrey")
+        temperatureLabel.grid(row=1, sticky="W", padx=40)
+        Label(master, image=img, bg="maroon", foreground="maroon").grid(row=1, sticky="E")
+        weatherPredictionLabel = Label(master, font=("LEIXO DEMO", 20), bg="maroon", foreground="dimgrey")
+        weatherPredictionLabel.grid(row=2, sticky="W", padx=40)
+        getWeather()
+        master.mainloop()
 
 
 app = QApplication(sys.argv)
