@@ -127,7 +127,7 @@ class Ui_FridayGUI(object):
         self.textBrowser_6.setFont(font)
         self.textBrowser_6.setStyleSheet("background:transparent;\n"
                                        "border-radius:none;\n"
-                                       "color:white;\n"
+                                       "color:silver;\n"
                                        "font-size:30px;")
         self.textBrowser_6.setObjectName("textBrowser_6")
         self.textBrowser_7 = QtWidgets.QTextBrowser(self.centralwidget)
