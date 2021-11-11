@@ -11,6 +11,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
+# noinspection PyAttributeOutsideInit,PyShadowingNames,PyPep8Naming
 class Ui_FridayGUI(object):
     def setupUi(self, FridayGUI):
         FridayGUI.setObjectName("FridayGUI")
@@ -56,7 +57,7 @@ class Ui_FridayGUI(object):
         self.textBrowser.setFont(font)
         self.textBrowser.setStyleSheet("background:transparent;\n"
 "border-radius:none;\n"
-"color:maroon;\n"
+"color:red;\n"
 "font-size:50px;")
         self.textBrowser.setObjectName("textBrowser")
         self.textBrowser_2 = QtWidgets.QTextBrowser(self.centralwidget)
@@ -69,7 +70,7 @@ class Ui_FridayGUI(object):
         self.textBrowser_2.setFont(font)
         self.textBrowser_2.setStyleSheet("background:transparent;\n"
                                        "border-radius:none;\n"
-                                       "color:dimgrey;\n"
+                                       "color:grey;\n"
                                        "font-size:50px;")
         self.textBrowser_2.setObjectName("textBrowser_2")
         self.textBrowser_3 = QtWidgets.QTextBrowser(self.centralwidget)
@@ -93,7 +94,7 @@ class Ui_FridayGUI(object):
         self.textBrowser_4.setAutoFillBackground(False)
         self.textBrowser_4.setStyleSheet("background:transparent;\n"
                                        "border-radius:none;\n"
-                                       "color:maroon;\n"
+                                       "color:red;\n"
                                        "font-size:50px;")
         self.textBrowser_4.setObjectName("textBrowser_4")
         self.label_2 = QtWidgets.QLabel(self.centralwidget)
@@ -126,7 +127,7 @@ class Ui_FridayGUI(object):
         self.textBrowser_6.setFont(font)
         self.textBrowser_6.setStyleSheet("background:transparent;\n"
                                        "border-radius:none;\n"
-                                       "color:orange;\n"
+                                       "color:white;\n"
                                        "font-size:30px;")
         self.textBrowser_6.setObjectName("textBrowser_6")
         self.textBrowser_7 = QtWidgets.QTextBrowser(self.centralwidget)
@@ -139,7 +140,7 @@ class Ui_FridayGUI(object):
         self.textBrowser_7.setFont(font)
         self.textBrowser_7.setStyleSheet("background:transparent;\n"
                                        "border-radius:none;\n"
-                                       "color:dimgrey;\n"
+                                       "color:grey;\n"
                                        "font-size:30px;")
         self.textBrowser_7.setObjectName("textBrowser_7")
         self.label_3 = QtWidgets.QLabel(self.centralwidget)
@@ -174,7 +175,8 @@ class Ui_FridayGUI(object):
 
     def retranslateUi(self, FridayGUI):
         _translate = QtCore.QCoreApplication.translate
-        FridayGUI.setWindowTitle(_translate("FridayGUI", "MainWindow"))
+        FridayGUI.setWindowTitle(_translate("FridayGUI", "FRIDAY 0.6.1 BETA Version"))
+        FridayGUI.setWindowIcon(QtGui.QIcon("C:/FRIDAY/files/icons/Friday_icon_file.png"))
         self.pushButton.setText(_translate("FridayGUI", "RUN"))
         self.pushButton_2.setText(_translate("FridayGUI", "TERMINATE"))
         self.textBrowser_3.setHtml(_translate("FridayGUI", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
