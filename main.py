@@ -21,9 +21,7 @@ import names
 import speedtest
 import randfacts
 import translators as ts
-from tkinter import Label
-from tkinter import Tk
-from PIL import Image, ImageTk
+from PIL import Image
 from termcolor import colored
 from audioplayer import AudioPlayer
 from datetime import date
@@ -63,8 +61,39 @@ rate = engine.getProperty('rate')
 volume = engine.getProperty('volume')
 voice = engine.getProperty('voice')
 
+location = ''
+temperature = ''
+weatherPrediction = ''
+
+
+def weather_info():
+    while True:
+        from time import sleep
+        url_temp = "https://weather.com/en-IN/weather/today/l/4aff3ae553b47caf710d085a58fe60acac12d05abc56e4e18eca484e55ceede6"
+        page = requests.get(url_temp)
+        soup = BeautifulSoup(page.content, "html.parser")
+        global location, temperature, weatherPrediction
+        location = soup.find('h1', class_="CurrentConditions--location--kyTeL").text
+        temperature = soup.find('span', class_="CurrentConditions--tempValue--3a50n").text
+        weatherPrediction = soup.find('div', class_="CurrentConditions--phraseValue--2Z18W").text
+        sleep(1)
+
+
+def weather():
+    return location, temperature, weatherPrediction
+
+# locationLabel.config(text=location)
+# temperatureLabel.config(text=temperature)
+# weatherPredictionLabel.config(text=weatherPrediction)
+
+# temperatureLabel.after(60000, getWeather)
+# master.update()
+
+
 text = ''
 speak_print = ''
+listening = ''
+recognizing = ''
 
 
 # noinspection PyShadowingNames,PyAttributeOutsideInit,SpellCheckingInspection
@@ -74,10 +103,16 @@ def take_audio():
         r.pause_threshold = 1
         r.adjust_for_ambient_noise(source)
         r.dynamic_energy_threshold = 1000
-        print("listening...")
+        global listening
+        listening = "listening..."
+        print(listening)
         audio = r.listen(source, phrase_time_limit=20)
+        listening = ''
     try:
-        print("Recognizing...")
+        # global recognizing
+        recognizing = "Recognizing..."
+        print(recognizing)
+        # recognizing = ''
         global text
         text = r.recognize_google(audio, language='en-IN')
         print(f"user said: {text}")
@@ -96,6 +131,36 @@ def output():
 
 def output_2():
     return speak
+
+
+# def GUI_weather_info():
+#    url = "https://weather.com/en-IN/weather/today/l/4aff3ae553b47caf710d085a58fe60acac12d05abc56e4e18eca484e55ceede6"
+#
+#    master = Tk()
+#    master.title("Weather Info")
+#    master.anchor("center")
+#    master.config(bg="maroon")
+#    master.geometry("3340x400")
+#    # master.attributes('-alpha', 0.5)
+#   master.wm_attributes('-transparentcolor', master['bg'])
+#    master.overrideredirect(True)
+#
+#    img = Image.open("C:/FRIDAY/files/icons/weather_icon_4.png")
+#    img = img.resize((150, 150))
+#    img = ImageTk.PhotoImage(img)
+#
+#    def getWeather():
+#
+#
+#    locationLabel = Label(master, font=("LEIXO DEMO", 20), bg="maroon", foreground="red")
+#    locationLabel.grid(row=0, sticky="N", padx=10)
+#    temperatureLabel = Label(master, font=("Calibri Bold", 70), bg="maroon", foreground="dimgrey")
+#    temperatureLabel.grid(row=1, sticky="W", padx=40)
+#    Label(master, image=img, bg="maroon", foreground="maroon").grid(row=1, sticky="E")
+#    weatherPredictionLabel = Label(master, font=("LEIXO DEMO", 20), bg="maroon", foreground="dimgrey")
+#    weatherPredictionLabel.grid(row=2, sticky="W", padx=40)
+#    getWeather()
+#    master.mainloop()
 
 
 def check_internet_status():
@@ -606,11 +671,12 @@ class MainThread(QThread):
         response = ["please wait while i check for internet availability.", "please wait , checking for stable internet connection.", "please kindly wait while i check for stable internet connection."]
         response_reply = random.choice(response)
         print(response_reply)
-        speak(response_reply)
         global speak_print
-        speak_print = f"ALL SYSTEMS ARE NOW ONLINE."
+        speak_print = response_reply
+        speak(response_reply)
         check_internet_status()
         print(f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue.")
+        speak_print = f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue."
         speak(f"Please say , WAKEUP ,  or say , {WAKE_WORD} , to continue.")
         while True:
             # noinspection PyAttributeOutsideInit
@@ -2957,6 +3023,11 @@ class MainThread(QThread):
 
 startExecution = MainThread()
 
+if listening == "listening...":
+    listening_wave = "C:/FRIDAY/files/icons/listening_wave.gif"
+elif listening == '':
+    listening_wave = "C:/FRIDAY/files/icons/sound_wave.gif"
+
 
 class Main(QMainWindow):
 
@@ -2966,16 +3037,22 @@ class Main(QMainWindow):
         self.ui = Ui_FridayGUI()
         self.ui.setupUi(self)
         self.ui.pushButton.clicked.connect(self.startTask)
+        self.ui.pushButton_minimize_2.clicked.connect(lambda: self.showMinimized())
+        self.setWindowFlags(Qt.FramelessWindowHint)
         self.ui.pushButton_2.clicked.connect(self.close)
+        self.ui.pushButton_close.clicked.connect(lambda: self.close())
         os.system('TASKKILL /F /IM friday.exe')
 
     def startTask(self):
         self.ui.movie = QtGui.QMovie("C:/FRIDAY/files/icons/IRONMAN-HUD-2K.gif")
         self.ui.label.setMovie(self.ui.movie)
         self.ui.movie.start()
-        self.ui.movie = QtGui.QMovie("C:/FRIDAY/files/icons/sound_wave.gif")
-        self.ui.label_4.setMovie(self.ui.movie)
-        self.ui.movie.start()
+        self.ui.movie_2 = QtGui.QMovie(listening_wave)
+        self.ui.label_4.setMovie(self.ui.movie_2)
+        self.ui.movie_2.start()
+        self.ui.movie_3 = QtGui.QMovie("files/icons/weather_animation_1.gif")
+        self.ui.label_7.setMovie(self.ui.movie_3)
+        self.ui.movie_3.start()
         timer = QTimer(self)
         timer.timeout.connect(self.showTime)
         timer.start(1000)
@@ -2989,50 +3066,13 @@ class Main(QMainWindow):
         self.ui.textBrowser.setText(label_time)
         self.ui.textBrowser_2.setText(label_date)
         self.ui.textBrowser_5.setText(speak_print)
-        self.ui.textBrowser_6.setText("YOU SAID :")
+        self.ui.textBrowser_6.setText(listening)
         self.ui.textBrowser_7.setText(text)
+        self.ui.textBrowser_8.setText(location)
+        self.ui.textBrowser_9.setText(temperature)
+        self.ui.textBrowser_10.setText(weatherPrediction)
+        # self.ui.movie_2.destroyed(self.ui.movie_2)
         # self.ui.label_3.update(self.GUI_weather_info())
-
-    # noinspection PyMethodMayBeStatic
-    def GUI_weather_info(self):
-        url = "https://weather.com/en-IN/weather/today/l/4aff3ae553b47caf710d085a58fe60acac12d05abc56e4e18eca484e55ceede6"
-
-        master = Tk()
-        master.title("Weather Info")
-        master.anchor("center")
-        master.config(bg="maroon")
-        master.geometry("3340x400")
-        # master.attributes('-alpha', 0.5)
-        master.wm_attributes('-transparentcolor', master['bg'])
-        master.overrideredirect(True)
-
-        img = Image.open("C:/FRIDAY/files/icons/weather_icon_4.png")
-        img = img.resize((150, 150))
-        img = ImageTk.PhotoImage(img)
-
-        def getWeather():
-            page = requests.get(url)
-            soup = BeautifulSoup(page.content, "html.parser")
-            location = soup.find('h1', class_="CurrentConditions--location--kyTeL").text
-            temperature = soup.find('span', class_="CurrentConditions--tempValue--3a50n").text
-            weatherPrediction = soup.find('div', class_="CurrentConditions--phraseValue--2Z18W").text
-
-            locationLabel.config(text=location)
-            temperatureLabel.config(text=temperature)
-            weatherPredictionLabel.config(text=weatherPrediction)
-
-            temperatureLabel.after(60000, getWeather)
-            master.update()
-
-        locationLabel = Label(master, font=("LEIXO DEMO", 20), bg="maroon", foreground="red")
-        locationLabel.grid(row=0, sticky="N", padx=10)
-        temperatureLabel = Label(master, font=("Calibri Bold", 70), bg="maroon", foreground="dimgrey")
-        temperatureLabel.grid(row=1, sticky="W", padx=40)
-        Label(master, image=img, bg="maroon", foreground="maroon").grid(row=1, sticky="E")
-        weatherPredictionLabel = Label(master, font=("LEIXO DEMO", 20), bg="maroon", foreground="dimgrey")
-        weatherPredictionLabel.grid(row=2, sticky="W", padx=40)
-        getWeather()
-        master.mainloop()
 
 
 app = QApplication(sys.argv)
