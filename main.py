@@ -20,7 +20,9 @@ import cv2
 import names
 import speedtest
 import randfacts
+import keyboard
 import translators as ts
+from PyQt5.QtWidgets import QLineEdit, QHBoxLayout
 from PIL import Image
 from termcolor import colored
 from audioplayer import AudioPlayer
@@ -32,6 +34,7 @@ from PyQt5.QtCore import QTimer, QTime, QDate, Qt
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from PyQt5 import QtCore
 from FridayGUI import Ui_FridayGUI
 from pywikihow import search_wikihow
 from gtts import gTTS
@@ -67,20 +70,28 @@ weatherPrediction = ''
 
 
 def weather_info():
-    while True:
-        from time import sleep
-        url_temp = "https://weather.com/en-IN/weather/today/l/4aff3ae553b47caf710d085a58fe60acac12d05abc56e4e18eca484e55ceede6"
-        page = requests.get(url_temp)
-        soup = BeautifulSoup(page.content, "html.parser")
-        global location, temperature, weatherPrediction
-        location = soup.find('h1', class_="CurrentConditions--location--kyTeL").text
-        temperature = soup.find('span', class_="CurrentConditions--tempValue--3a50n").text
-        weatherPrediction = soup.find('div', class_="CurrentConditions--phraseValue--2Z18W").text
-        sleep(1)
+    url_temp = "https://weather.com/en-IN/weather/today/l/4aff3ae553b47caf710d085a58fe60acac12d05abc56e4e18eca484e55ceede6"
+    page = requests.get(url_temp)
+    soup = BeautifulSoup(page.content, "html.parser")
+    global location, temperature, weatherPrediction
+    location = soup.find('h1', class_="CurrentConditions--location--kyTeL").text
+    temperature = soup.find('span', class_="CurrentConditions--tempValue--3a50n").text
+    weatherPrediction = soup.find('div', class_="CurrentConditions--phraseValue--2Z18W").text
 
 
-def weather():
-    return location, temperature, weatherPrediction
+weather_info()
+
+
+def location_():
+    return location
+
+
+def temperature_():
+    return temperature
+
+
+def weatherPrediction_():
+    return weatherPrediction
 
 # locationLabel.config(text=location)
 # temperatureLabel.config(text=temperature)
@@ -1170,7 +1181,7 @@ class MainThread(QThread):
                     print("please type in the ip address in the terminal.")
                     speak("please type in the ip address in the terminal.")
                     response = requests.post("http://ip-api.com/batch", json=[
-                        {"query": input("Enter the ip address:")},
+                        {"query": f"ff"},
                         # {"query": "167.71.3.52"},
                         # {"query": "206.189.198.234"},
                         # {"query": "157.230.75.212"}
@@ -2334,24 +2345,142 @@ class MainThread(QThread):
                         pass
                 elif "send message" in self.text or "whatsapp message" in self.text:
                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
+                    from time import sleep
                     try:
-                        print("please specify the phone number of the person that you want to send the message to in the command prompt.")
-                        speak("please specify the phone number of the person that you want to send the message to in the command prompt.")
-                        # ph_number = input("Enter the contact in the cmd prompt: ")
-                        ph_number = take_audio().lower()
-                        print("now say the message that you want to send to the said person.")
-                        speak("now say the message that you want to send to the said person.")
+                        print("ok, please understand that in-order to send the whatsapp message, you have to be logged-in in web-whatsapp in your default browser.")
+                        speak("ok, please understand that in-order to send the whatsapp message, you have to be logged-in in web-whatsapp in your default browser.")
+                        print("please type in the phone number of the person that you want to send the message to.")
+                        speak("please type in the phone number of the person that you want to send the message to.")
+                        while True:
+                            if keyboard.is_pressed("enter"):
+                                break
+
+                        sleep(1)
+                        while True:
+                            ph_number_ = text_out
+                            numbers__ = []
+                            for word in ph_number_.split():
+                                if word.isdigit():
+                                    numbers__.append(int(word))
+
+                            _numbers_ = sum(c.isdigit() for c in ph_number_)
+                            if _numbers_ == 10:
+                                break
+                            elif _numbers_ == 12:
+                                break
+                                # print(numbers)
+                            else:
+                                if _numbers_ >= 13:
+                                    print("it seems that the number you entered is invalid.")
+                                    speak("it seems that the number you entered is invalid.")
+                                    print("please enter a valid contact number.")
+                                    speak("please enter a valid contact number.")
+                                    while True:
+                                        if keyboard.is_pressed("enter"):
+                                            break
+
+                                elif _numbers_ <= 9:
+                                    print("it seems that the number you entered is invalid.")
+                                    speak("it seems that the number you entered is invalid.")
+                                    print("please check if you have included your country code as it is required.")
+                                    speak("please check if you have included your country code as it is required 2.")
+                                    print("please enter a valid contact number.")
+                                    speak("please enter a valid contact number.")
+                                    while True:
+                                        if keyboard.is_pressed("enter"):
+                                            break
+                                elif _numbers_ == 11:
+                                    print("it seems that the number you entered is invalid.")
+                                    speak("it seems that the number you entered is invalid.")
+                                    print("please check if you have included your country code as it is required.")
+                                    speak("please check if you have included your country code as it is required 3.")
+                                    print("please enter a valid contact number.")
+                                    speak("please enter a valid contact number.")
+                                    while True:
+                                        if keyboard.is_pressed("enter"):
+                                            break
+                                else:
+                                    pass
+                            sleep(1)
+                        # time_of_sending = text_out
+
+                        ph_number = numbers__[0]
+                        print("That's done, now say the message that you want to send to the said person.")
+                        speak("That's done, now say the message that you want to send to the said person.")
                         message = take_audio().lower()
-                        print("great , now please say the hour to send the message in 24 hour format.")
-                        speak("great , now please say the hour to send the message in 24 hour format.")
-                        # time_of_sending_hour = input("Enter the hour to send the message in 24 hour format :")
-                        # time_of_sending_minute = input("Enter the minute to send the message:")
-                        time_of_sending_hour = take_audio().lower()
-                        print("great , now please say the minute to send the message.")
-                        speak("great , now please say the minute to send the message.")
-                        time_of_sending_minute = take_audio().lower()
-                        pywhatkit.sendwhatmsg("+91" + ph_number, message, int(time_of_sending_hour), int(time_of_sending_minute))
-                        pass
+                        print("great , now please provide the time at which you want the message to be sent.")
+                        speak("great , now please provide the time at which you want the message to be sent.")
+                        print("make sure to enter the time in 24 hour format, and also with blank spaces between the hour digits and the minute digits")
+                        speak("make sure to enter the time in 24 hour format, and also with blank spaces between the hour digits and the minute digits")
+                        print("also enter the hour first and then the minute")
+                        speak("also enter the hour first and then the minute")
+                        while True:
+                            if keyboard.is_pressed("enter"):
+                                break
+
+                        sleep(1)
+                        while True:
+                            time_of_sending = text_out
+
+                            numbers = []
+                            for word in time_of_sending.split():
+                                if word.isdigit():
+                                    numbers.append(int(word))
+
+                            print(numbers[0])
+                            print(numbers[1])
+
+                            numbers_ = sum(c.isdigit() for c in time_of_sending)
+                            # print(numbers)
+                            if 0 < numbers[0] < 24 and 0 < numbers[1] < 60:
+                                speak("break 3")
+                                break
+                            else:
+                                if numbers[0] > 23:
+                                    print("it seems that the time you entered is invalid.")
+                                    speak("it seems that the time you entered is invalid.3")
+                                    print("please enter a valid time.")
+                                    speak("please enter a valid time.")
+                                    while True:
+                                        if keyboard.is_pressed("enter"):
+                                            break
+                                elif numbers[0] < 0:
+                                    print("it seems that the time you entered is invalid.")
+                                    speak("it seems that the time you entered is invalid.4")
+                                    print("please enter a valid time.")
+                                    speak("please enter a valid time.")
+                                    while True:
+                                        if keyboard.is_pressed("enter"):
+                                            break
+                                elif numbers[1] > 59:
+                                    print("it seems that the time you entered is invalid.")
+                                    speak("it seems that the time you entered is invalid.5")
+                                    print("please enter a valid time.")
+                                    speak("please enter a valid time.")
+                                    while True:
+                                        if keyboard.is_pressed("enter"):
+                                            break
+                                elif numbers[1] < 0:
+                                    print("it seems that the time you entered is invalid.")
+                                    speak("it seems that the time you entered is invalid.6")
+                                    print("please enter a valid time.")
+                                    speak("please enter a valid time.")
+                                    while True:
+                                        if keyboard.is_pressed("enter"):
+                                            break
+                                else:
+                                    pass
+                            sleep(1)
+                        time_of_sending = text_out
+                        numbers = []
+                        for word in time_of_sending.split():
+                            if word.isdigit():
+                                numbers.append(int(word))
+                        time_of_sending_hour_ = numbers[0]
+                        time_of_sending_minute_ = numbers[1]
+                        # print("great , now please say the minute to send the message.")
+                        speak(f"great. the message will be sent at {time_of_sending_hour_} , {time_of_sending_minute_}")
+                        pywhatkit.sendwhatmsg("+91" + str(ph_number), message, int(time_of_sending_hour_), int(time_of_sending_minute_))
 
                     except Exception as e:
                         print(str(e))
@@ -2418,11 +2547,17 @@ class MainThread(QThread):
                         speak("sorry sir ,  due to some network issue i'm unable to find where we are.")
                         pass
                 elif "instagram profile" in self.text or "profile on instagram" in self.text:
+                    from time import sleep
                     AudioPlayer("C:/FRIDAY/audio/listening_sound.mp3").play(block=True)
                     try:
                         print("sure  , please enter the user name correctly in the terminal.")
                         speak("sure  , please enter the user name correctly in the terminal.")
-                        name = input("Enter the username here :")
+                        while True:
+                            if keyboard.is_pressed("enter"):
+                                break
+
+                        sleep(1)
+                        name = text_out
                         webbrowser.open(f"www.instagram.com/{name}")
                         print(f"got it , here is the profile of the user {name} on instagram.")
                         speak(f"got it , here is the profile of the user {name} on instagram.")
@@ -3041,7 +3176,28 @@ class Main(QMainWindow):
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.ui.pushButton_2.clicked.connect(self.close)
         self.ui.pushButton_close.clicked.connect(lambda: self.close())
+        hbox = QHBoxLayout()
+        self.lineedit = QLineEdit(self)
+        self.text_out = self.lineedit.text()
+        self.lineedit.returnPressed.connect(self.click_button)
+        self.lineedit.setGeometry(QtCore.QRect(1400, 730, 480, 61))
+        font = QtGui.QFont()
+        font.setFamily("Agency FB")
+        font.setPointSize(24)
+        font.setBold(True)
+        font.setWeight(75)
+        self.lineedit.setFont(font)
+        self.lineedit.setStyleSheet("background:transparent;\n"
+                                    "border-radius:none;\n"
+                                    "color:grey;\n")
+        hbox.addWidget(self.lineedit)
+        self.text_out = self.lineedit.text()
         os.system('TASKKILL /F /IM friday.exe')
+
+    def click_button(self):
+        global text_out
+        text_out = self.lineedit.text()
+        print(text_out)
 
     def startTask(self):
         self.ui.movie = QtGui.QMovie("C:/FRIDAY/files/icons/IRONMAN-HUD-2K.gif")
@@ -3053,6 +3209,16 @@ class Main(QMainWindow):
         self.ui.movie_3 = QtGui.QMovie("files/icons/weather_animation_1.gif")
         self.ui.label_7.setMovie(self.ui.movie_3)
         self.ui.movie_3.start()
+        self.ui.movie_4 = QtGui.QMovie("files/icons/vertical window.png")
+        self.ui.label_2.setMovie(self.ui.movie_4)
+        self.ui.movie_4.start()
+        self.ui.movie_5 = QtGui.QMovie("files/icons/horizontal window.png")
+        self.ui.label_3.setMovie(self.ui.movie_5)
+        self.ui.movie_5.start()
+        self.ui.movie_5 = QtGui.QMovie("files/icons/DIALOGUE_BOX.png")
+        self.ui.label_8.setMovie(self.ui.movie_5)
+        self.ui.movie_5.start()
+
         timer = QTimer(self)
         timer.timeout.connect(self.showTime)
         timer.start(1000)
@@ -3065,6 +3231,8 @@ class Main(QMainWindow):
         label_date = current_date.toString(Qt.ISODate)
         self.ui.textBrowser.setText(label_time)
         self.ui.textBrowser_2.setText(label_date)
+        self.ui.textBrowser_3.setText(f"{WAKE_WORD_CAPITAL}")
+        self.ui.textBrowser_4.setText("DEVELOPED AT EUFORIS")
         self.ui.textBrowser_5.setText(speak_print)
         self.ui.textBrowser_6.setText(listening)
         self.ui.textBrowser_7.setText(text)
